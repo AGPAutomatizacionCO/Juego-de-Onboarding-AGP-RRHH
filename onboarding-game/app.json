@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "OnboardingGame",
+    "slug": "onboarding-game",
+    "version": "1.0.1",
+    "orientation": "default",
+    "icon": "./assets/fondo.png",
+    "scheme": "onboarding-game",
+    "splash": {
+      "image": "./assets/fondo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.onboardinggame.juegoapp",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/fondo.png",
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "web": {
+      "favicon": "./assets/fondo.png"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "updates": {
+      "enabled": false
+    },
+    "owner": "onboardinggame",
+    "extra": {
+      "eas": {
+        "projectId": "bbe87f7c-0753-4d3c-a010-3f6dc642525c"
+      }
+    }
+  }
+}

@@ -1,0 +1,49 @@
+--- a/config/db.js
++++ b/config/db.js
+@@ -1,14 +1,10 @@
+ const sql = require("mssql");
+ 
+-// ===============================
+-// DEBUG DE VARIABLES DE ENTORNO
+-// ===============================
+-console.log("VARIABLES DE ENTORNO:", {
+-  DB_USER: process.env.DB_USER,
+-  DB_SERVER: process.env.DB_SERVER,
+-  DB_DATABASE: process.env.DB_DATABASE,
+-  DB_PORT: process.env.DB_PORT,
+-});
++// Antes aquí se imprimían usuario, servidor, base y puerto en cada arranque.
++// Se quitó porque en un servicio administrado esos registros quedan
++// persistidos y consultables por cualquiera con acceso a los logs. Para
++// diagnosticar la conexión basta el endpoint /api/health, que informa si el
++// pool está activo sin revelar la configuración.
+ 
+ // ===============================
+ // CONFIGURACIÓN SQL SERVER
+--- a/controllers/adminAuth.controller.js
++++ b/controllers/adminAuth.controller.js
+@@ -172,13 +172,11 @@
+ exports.login = async (req, res) => {
+   try {
+     const body = req.body || {};
+-    console.log("[ADMIN LOGIN] body recibido:", JSON.stringify(body));
++    // No se registra el cuerpo de la petición: contiene la contraseña en claro.
+ 
+     const user = String(body.user ?? body.username ?? body.ADMIN_USER ?? "").trim();
+     const pass = String(body.pass ?? body.password ?? body.ADMIN_PASS ?? "").trim();
+ 
+-    console.log("[ADMIN LOGIN] user:", user, "| pass length:", pass.length);
+-
+     if (!user || !pass) {
+       console.log("[ADMIN LOGIN] FALLO: user o pass vacíos");
+       return res.status(400).json({
+@@ -207,7 +205,8 @@
+     }
+ 
+     const passDB = String(admin.ADMINISTRADOR_PASSWORD ?? "").trim();
+-    console.log("[ADMIN LOGIN] comparando passwords - DB:", JSON.stringify(passDB), "vs input:", JSON.stringify(pass), "| iguales:", passDB === pass);
++    // Antes se imprimían aquí AMBAS contraseñas en claro — la de la base y la
++    // recibida. Se quitó: bastaba con acceso a los logs para obtenerlas.
+ 
+     if (passDB !== pass) {
+       console.log("[ADMIN LOGIN] FALLO: password no coincide");

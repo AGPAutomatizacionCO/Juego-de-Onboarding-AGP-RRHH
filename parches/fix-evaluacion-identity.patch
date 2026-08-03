@@ -1,0 +1,36 @@
+--- a/controllers/adminAuth.controller.js
++++ b/controllers/adminAuth.controller.js
+@@ -689,13 +689,16 @@
+         .input("nivelKey", sql.Int, nivelKey)
+         .query(`DELETE FROM dbo.Onboarding_Evaluacion WHERE EVALUACION_COD = @nivelKey`);
+ 
+-      const maxIdQ = await new sql.Request(tx).query(`SELECT ISNULL(MAX(EVALUACION_KEY), 0) + 1 as NEXT_ID FROM dbo.Onboarding_Evaluacion`);
+-      let nextId = maxIdQ.recordset[0].NEXT_ID;
+-
++      // EVALUACION_KEY es columna IDENTITY en la base (verificado contra
++      // AGP_RRHH). Por eso NO se envía: la asigna SQL Server. Antes se
++      // calculaba con MAX(EVALUACION_KEY)+1 y se insertaba explícita, lo que
++      // hacía fallar siempre este guardado con "Cannot insert explicit value
++      // for identity column ... when IDENTITY_INSERT is set to OFF".
++      // Dejar que la asigne la base elimina además la condición de carrera
++      // que tenía el MAX+1 con dos administradores guardando a la vez.
+       for (const it of evaluacionItems) {
+         const corrNum = it.correcta === "a" ? 1 : it.correcta === "b" ? 2 : it.correcta === "c" ? 3 : it.correcta === "d" ? 4 : 1;
+         await new sql.Request(tx)
+-          .input("id", sql.Int, nextId)
+           .input("cod", sql.Int, nivelKey)
+           .input("pregunta", sql.NVarChar(sql.MAX), it.pregunta)
+           .input("a", sql.NVarChar(sql.MAX), it.opcionA)
+@@ -704,10 +707,9 @@
+           .input("d", sql.NVarChar(sql.MAX), it.opcionD)
+           .input("corr", sql.Int, corrNum)
+           .query(`
+-            INSERT INTO dbo.Onboarding_Evaluacion (EVALUACION_KEY, EVALUACION_COD, EVALUACION_PREGUNTA, EVALUACION_RESPUESTA_1, EVALUACION_RESPUESTA_2, EVALUACION_RESPUESTA_3, EVALUACION_RESPUESTA_4, EVALUACION_CORRECTA, EVALUACION_ESTATUS)
+-            VALUES (@id, @cod, @pregunta, @a, @b, @c, @d, @corr, 1)
++            INSERT INTO dbo.Onboarding_Evaluacion (EVALUACION_COD, EVALUACION_PREGUNTA, EVALUACION_RESPUESTA_1, EVALUACION_RESPUESTA_2, EVALUACION_RESPUESTA_3, EVALUACION_RESPUESTA_4, EVALUACION_CORRECTA, EVALUACION_ESTATUS)
++            VALUES (@cod, @pregunta, @a, @b, @c, @d, @corr, 1)
+           `);
+-        nextId++;
+       }
+     }
+ 

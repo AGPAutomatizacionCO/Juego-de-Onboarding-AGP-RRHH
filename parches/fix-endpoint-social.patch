@@ -1,0 +1,33 @@
+--- a/app/nivelsocial4.tsx
++++ b/app/nivelsocial4.tsx
+@@ -179,7 +179,7 @@
+         [`u:${uk}:isla${ISLA_KEY}_nivel${NIVEL_KEY}_social_done`,  "true"],
+         [`u:${uk}:isla${ISLA_KEY}_nivel${NIVEL_KEY}_social_score`, String(score)],
+       ]);
+-      await fetch(`${API_URL}/api/niveles/salto/${NIVEL_KEY}/resultado`, {
++      await fetch(`${API_URL}/api/niveles/social/${NIVEL_KEY}/resultado`, {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({ usuarioKey: Number(uk), puntaje: score, aprobado: 1 }),
+--- a/app/nivelsocial5.tsx
++++ b/app/nivelsocial5.tsx
+@@ -211,7 +211,7 @@
+         [`u:${uk}:isla${ISLA_KEY}_nivel${NIVEL_KEY}_social_done`,  "true"],
+         [`u:${uk}:isla${ISLA_KEY}_nivel${NIVEL_KEY}_social_score`, String(score)],
+       ]);
+-      await fetch(`${API_URL}/api/niveles/salto/${NIVEL_KEY}/resultado`, {
++      await fetch(`${API_URL}/api/niveles/social/${NIVEL_KEY}/resultado`, {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({
+--- a/app/nivelsocial7.tsx
++++ b/app/nivelsocial7.tsx
+@@ -191,7 +191,7 @@
+         [`u:${uk}:isla${ISLA_KEY}_nivel${NIVEL_KEY}_social_done`,  "true"],
+         [`u:${uk}:isla${ISLA_KEY}_nivel${NIVEL_KEY}_social_score`, String(score)],
+       ]);
+-      await fetch(`${API_URL}/api/niveles/salto/${NIVEL_KEY}/resultado`, {
++      await fetch(`${API_URL}/api/niveles/social/${NIVEL_KEY}/resultado`, {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({ usuarioKey: Number(uk), puntaje: score, aprobado: 1 }),

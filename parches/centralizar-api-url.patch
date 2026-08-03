@@ -1,0 +1,974 @@
+--- a/app/Calidad.tsx
++++ b/app/Calidad.tsx
+@@ -13,6 +13,7 @@
+   View,
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ async function apiJson(url: string, options?: RequestInit) {
+   const res = await fetch(url, {
+@@ -61,7 +62,7 @@
+   const botonVolver   = require("../assets/botonmapa.png");
+   const imagenAnimada = require("../assets/LOGO.png");
+ 
+-  const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++  const API_URL = API_BASE_URL;
+ 
+   const [loadingProgreso, setLoadingProgreso] = useState<boolean>(false);
+ 
+--- a/app/Conceptos.tsx
++++ b/app/Conceptos.tsx
+@@ -13,6 +13,7 @@
+   View,
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ async function apiJson(url: string, options?: RequestInit) {
+   const res = await fetch(url, {
+@@ -62,7 +63,7 @@
+   const botonVolver   = require("../assets/botonmapa.png");
+   const imagenAnimada = require("../assets/LOGO.png");
+ 
+-  const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++  const API_URL = API_BASE_URL;
+ 
+   const [loadingProgreso, setLoadingProgreso] = useState<boolean>(false);
+ 
+--- a/app/EvaluacionF.tsx
++++ b/app/EvaluacionF.tsx
+@@ -14,12 +14,13 @@
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ const fondo = require("../assets/FONDOREG.png");
+ const RUTA_VOLVER = "/mapa"; // Evaluación general → vuelve al mapa principal
+ 
+-const API_BASE     = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/niveles`;
+-const API_USUARIOS = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/usuarios`;
++const API_BASE     = `${API_BASE_URL}/api/niveles`;
++const API_USUARIOS = `${API_BASE_URL}/api/usuarios`;
+ const ISLA_KEY  = 9;   // ← Evaluación Final (según tabla BD Onboarding_Islas)
+ const NIVEL_KEY = 41;  // ← Evaluación Final General
+ 
+--- a/app/HSE.tsx
++++ b/app/HSE.tsx
+@@ -13,6 +13,7 @@
+   View,
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ /* ===== helper ===== */
+ async function apiJson(url: string, options?: RequestInit) {
+@@ -68,7 +69,7 @@
+   const botonVolver = require("../assets/botonmapa.png");
+   const imagenAnimada = require("../assets/LOGO.png");
+ 
+-  const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++  const API_URL = API_BASE_URL;
+ 
+   const [loadingProgreso, setLoadingProgreso] = useState<boolean>(false);
+ 
+--- a/app/Introduccion.tsx
++++ b/app/Introduccion.tsx
+@@ -13,6 +13,7 @@
+   View,
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ /* ===== helper ===== */
+ async function apiJson(url: string, options?: RequestInit) {
+@@ -75,7 +76,7 @@
+   const imagenAnimada = require("../assets/LOGO.png");
+ 
+   // ✅ URL API
+-  const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++  const API_URL = API_BASE_URL;
+ 
+   // ✅ Progreso real (de BD)
+   const [progresoNivelBD, setProgresoNivelBD] = useState<number>(1);
+--- a/app/LecturaOF.tsx
++++ b/app/LecturaOF.tsx
+@@ -13,6 +13,7 @@
+   View,
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ async function apiJson(url: string, options?: RequestInit) {
+   const res = await fetch(url, {
+@@ -61,7 +62,7 @@
+   const botonVolver   = require("../assets/botonmapa.png");
+   const imagenAnimada = require("../assets/LOGO.png");
+ 
+-  const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++  const API_URL = API_BASE_URL;
+ 
+   const [loadingProgreso, setLoadingProgreso] = useState<boolean>(false);
+ 
+--- a/app/Manipulacion.tsx
++++ b/app/Manipulacion.tsx
+@@ -13,6 +13,7 @@
+   View,
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ async function apiJson(url: string, options?: RequestInit) {
+   const res = await fetch(url, {
+@@ -61,7 +62,7 @@
+   const botonVolver   = require("../assets/botonmapa.png");
+   const imagenAnimada = require("../assets/LOGO.png");
+ 
+-  const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++  const API_URL = API_BASE_URL;
+ 
+   const [loadingProgreso, setLoadingProgreso] = useState<boolean>(false);
+ 
+--- a/app/Metrologia.tsx
++++ b/app/Metrologia.tsx
+@@ -13,6 +13,7 @@
+   View,
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ async function apiJson(url: string, options?: RequestInit) {
+   const res = await fetch(url, {
+@@ -61,7 +62,7 @@
+   const botonVolver   = require("../assets/botonmapa.png");
+   const imagenAnimada = require("../assets/LOGO.png");
+ 
+-  const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++  const API_URL = API_BASE_URL;
+ 
+   const [loadingProgreso, setLoadingProgreso] = useState<boolean>(false);
+ 
+--- a/app/Procesos.tsx
++++ b/app/Procesos.tsx
+@@ -13,6 +13,7 @@
+   View,
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ /* ===== helper ===== */
+ async function apiJson(url: string, options?: RequestInit) {
+@@ -68,7 +69,7 @@
+   const botonVolver  = require("../assets/botonmapa.png");
+   const imagenAnimada = require("../assets/LOGO.png");
+ 
+-  const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++  const API_URL = API_BASE_URL;
+ 
+   const [loadingProgreso, setLoadingProgreso] = useState<boolean>(false);
+ 
+--- a/app/adminPanel.tsx
++++ b/app/adminPanel.tsx
+@@ -19,6 +19,7 @@
+   View,
+ } from "react-native";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ /* ===== RESPONSIVE HELPER ===== */
+ const { width: SW, height: SH, width: screenWidth } = Dimensions.get("window");
+@@ -395,7 +396,7 @@
+   const router = useRouter();
+ 
+   const API_URL = useMemo(() => {
+-    const raw = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++    const raw = API_BASE_URL;
+     return normalizeBaseUrl(raw);
+   }, []);
+ 
+--- a/app/config.ts
++++ b/app/config.ts
+@@ -7,7 +7,30 @@
+ // ================================
+ // CONFIGURACIÓN API
+ // ================================
+-export const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++// ÚNICA fuente de verdad de la dirección del backend.
++//
++// Se define en tiempo de compilación mediante EXPO_PUBLIC_API_URL (ver .env).
++// OJO: las variables EXPO_PUBLIC_* se incrustan AL COMPILAR. Editar el .env
++// no modifica un APK ya generado: hay que volver a compilar siempre.
++//
++// Antes esta dirección estaba repetida 64 veces en 46 archivos. Cuando el
++// equipo que hospedaba la API se dio de baja y su IP fue reasignada, toda la
++// aplicación quedó apuntando a una máquina ajena. Por eso ahora vive aquí y
++// solo aquí.
++const RAW_API_URL = process.env.EXPO_PUBLIC_API_URL ?? "";
++
++if (!RAW_API_URL) {
++  console.warn(
++    "[config] EXPO_PUBLIC_API_URL no está definida. Las peticiones al " +
++      "backend fallarán. Definirla en .env y recompilar la aplicación."
++  );
++}
++
++// Sin barra final: el resto del código concatena `${API_BASE_URL}/api/...`
++export const API_BASE_URL = RAW_API_URL.replace(/\/+$/, "");
++
++// Alias retrocompatible para el código que ya importaba API_URL.
++export const API_URL = API_BASE_URL;
+ 
+ // ================================
+ // CONFIGURACIÓN DE ESCALA (TABLET)
+--- a/app/evaluacionFinal1.tsx
++++ b/app/evaluacionFinal1.tsx
+@@ -13,11 +13,12 @@
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ const fondo = require("../assets/FONDOREG.png");
+ 
+-const API_BASE = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/niveles`;
+-const API_USUARIOS = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/usuarios`;
++const API_BASE = `${API_BASE_URL}/api/niveles`;
++const API_USUARIOS = `${API_BASE_URL}/api/usuarios`;
+ const ISLA_KEY = 1;
+ const NIVEL_KEY = 5;
+ 
+--- a/app/evaluacionFinal2.tsx
++++ b/app/evaluacionFinal2.tsx
+@@ -13,13 +13,14 @@
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ const fondo = require("../assets/FONDOREG.png");
+ const RUTA_VOLVER = "/HSE";
+ 
+-const API_BASE     = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/niveles`;
+-const API_USUARIOS = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/usuarios`;
+-const API_ISLAS    = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/islas`;
++const API_BASE     = `${API_BASE_URL}/api/niveles`;
++const API_USUARIOS = `${API_BASE_URL}/api/usuarios`;
++const API_ISLAS    = `${API_BASE_URL}/api/islas`;
+ const ISLA_KEY  = 2;
+ const NIVEL_KEY = 10;
+ 
+--- a/app/evaluacionFinal3.tsx
++++ b/app/evaluacionFinal3.tsx
+@@ -13,12 +13,13 @@
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ const fondo = require("../assets/FONDOREG.png");
+ const RUTA_VOLVER = "/Procesos";
+ 
+-const API_BASE     = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/niveles`;
+-const API_USUARIOS = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/usuarios`;
++const API_BASE     = `${API_BASE_URL}/api/niveles`;
++const API_USUARIOS = `${API_BASE_URL}/api/usuarios`;
+ const ISLA_KEY  = 3;
+ const NIVEL_KEY = 15;
+ 
+--- a/app/evaluacionFinal4.tsx
++++ b/app/evaluacionFinal4.tsx
+@@ -13,12 +13,13 @@
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ const fondo = require("../assets/FONDOREG.png");
+ const RUTA_VOLVER = "/Conceptos";
+ 
+-const API_BASE     = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/niveles`;
+-const API_USUARIOS = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/usuarios`;
++const API_BASE     = `${API_BASE_URL}/api/niveles`;
++const API_USUARIOS = `${API_BASE_URL}/api/usuarios`;
+ const ISLA_KEY  = 4;
+ const NIVEL_KEY = 20;
+ 
+--- a/app/evaluacionFinal5.tsx
++++ b/app/evaluacionFinal5.tsx
+@@ -13,12 +13,13 @@
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ const fondo = require("../assets/FONDOREG.png");
+ const RUTA_VOLVER = "/Calidad";
+ 
+-const API_BASE     = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/niveles`;
+-const API_USUARIOS = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/usuarios`;
++const API_BASE     = `${API_BASE_URL}/api/niveles`;
++const API_USUARIOS = `${API_BASE_URL}/api/usuarios`;
+ const ISLA_KEY  = 8;
+ const NIVEL_KEY = 40;
+ 
+--- a/app/evaluacionFinal6.tsx
++++ b/app/evaluacionFinal6.tsx
+@@ -13,12 +13,13 @@
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ const fondo = require("../assets/FONDOREG.png");
+ const RUTA_VOLVER = "/Metrologia";
+ 
+-const API_BASE     = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/niveles`;
+-const API_USUARIOS = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/usuarios`;
++const API_BASE     = `${API_BASE_URL}/api/niveles`;
++const API_USUARIOS = `${API_BASE_URL}/api/usuarios`;
+ const ISLA_KEY  = 6;
+ const NIVEL_KEY = 30;
+ 
+--- a/app/evaluacionFinal7.tsx
++++ b/app/evaluacionFinal7.tsx
+@@ -13,12 +13,13 @@
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ const fondo = require("../assets/FONDOREG.png");
+ const RUTA_VOLVER = "/ManipulacionVidrio"; // ⚠️ ajusta al nombre real de tu archivo del mapa
+ 
+-const API_BASE     = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/niveles`;
+-const API_USUARIOS = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/usuarios`;
++const API_BASE     = `${API_BASE_URL}/api/niveles`;
++const API_USUARIOS = `${API_BASE_URL}/api/usuarios`;
+ const ISLA_KEY  = 5;   // ← Manipulación del Vidrio
+ const NIVEL_KEY = 25;  // ← Evaluación Final
+ 
+--- a/app/evaluacionFinal8.tsx
++++ b/app/evaluacionFinal8.tsx
+@@ -13,12 +13,13 @@
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ const fondo = require("../assets/FONDOREG.png");
+ const RUTA_VOLVER = "/LecturaOF"; // ⚠️ ajusta al nombre real de tu archivo del mapa
+ 
+-const API_BASE     = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/niveles`;
+-const API_USUARIOS = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api/usuarios`;
++const API_BASE     = `${API_BASE_URL}/api/niveles`;
++const API_USUARIOS = `${API_BASE_URL}/api/usuarios`;
+ const ISLA_KEY  = 7;   // ← Lectura OF
+ const NIVEL_KEY = 35;  // ← Evaluación Final
+ 
+--- a/app/mapa.tsx
++++ b/app/mapa.tsx
+@@ -11,9 +11,10 @@
+   View,
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ // 🔗 API (Node + Express + SQL Server)
+-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL = API_BASE_URL;
+ 
+ export default function MapaScreen() {
+   const router = useRouter();
+--- a/app/nivelcerebro1.tsx
++++ b/app/nivelcerebro1.tsx
+@@ -17,9 +17,10 @@
+   TouchableOpacity,
+   View,
+ } from "react-native";
++import { API_BASE_URL } from "./config";
+ 
+ // ─── API ──────────────────────────────────────────────────────────────────────
+-const API_BASE = process.env.EXPO_PUBLIC_API_URL || "http://:3001";
++const API_BASE = API_BASE_URL;
+ const API_URL  = `${API_BASE}/api`;
+ const ISLA_KEY  = 1;
+ const NIVEL_KEY = 3;
+--- a/app/nivelcerebro2.tsx
++++ b/app/nivelcerebro2.tsx
+@@ -14,13 +14,14 @@
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ /* =========================
+    ✅ CONFIG VISUAL
+    ========================= */
+ const fondo = require("../assets/islas/fondogeneral.png");
+ const RUTA_VOLVER = "/HSE";
+-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL = API_BASE_URL;
+ const NIVEL_KEY_API = 8; // Recordemos HSE en BD
+ const ISLA_KEY = 2;
+ const MAX_HINTS = 4;
+--- a/app/nivelcerebro3.tsx
++++ b/app/nivelcerebro3.tsx
+@@ -17,8 +17,9 @@
+   TouchableOpacity,
+   View,
+ } from "react-native";
++import { API_BASE_URL } from "./config";
+ 
+-const API_BASE = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_BASE = API_BASE_URL;
+ const API_URL  = `${API_BASE}/api`;
+ const ISLA_KEY  = 3;
+ const NIVEL_KEY = 13;
+--- a/app/nivelcerebro4.tsx
++++ b/app/nivelcerebro4.tsx
+@@ -13,13 +13,14 @@
+   TextInput,
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ /* =========================
+    ✅ CONFIG
+    ========================= */
+ const fondo = require("../assets/islas/fondogeneral.png");
+ const RUTA_VOLVER = "/Conceptos"; // ← ruta de la isla Conceptos Generales
+-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL = API_BASE_URL;
+ const NIVEL_KEY_API = 18;   // nivel 3 = Recordemos dentro de la isla 4
+ const ISLA_KEY_STORAGE = 4; // isla 4 = Conceptos Generales
+ const MAX_HINTS = 4;
+--- a/app/nivelcerebro5.tsx
++++ b/app/nivelcerebro5.tsx
+@@ -17,8 +17,9 @@
+   TouchableOpacity,
+   View,
+ } from "react-native";
++import { API_BASE_URL } from "./config";
+ 
+-const API_BASE = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_BASE = API_BASE_URL;
+ const API_URL  = `${API_BASE}/api`;
+ const ISLA_KEY  = 8;
+ const NIVEL_KEY = 38;
+--- a/app/nivelcerebro6.tsx
++++ b/app/nivelcerebro6.tsx
+@@ -14,13 +14,14 @@
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ /* =========================================================
+    CONFIG
+ ========================================================= */
+ const fondo       = require("../assets/islas/fondogeneral.png");
+ const RUTA_VOLVER = "/Metrologia";
+-const API_URL     = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL     = API_BASE_URL;
+ const ISLA_KEY    = 6;
+ const NIVEL_KEY   = 28;
+ const MAX_HINTS   = 4;
+--- a/app/nivelcerebro7.tsx
++++ b/app/nivelcerebro7.tsx
+@@ -17,8 +17,9 @@
+   TouchableOpacity,
+   View,
+ } from "react-native";
++import { API_BASE_URL } from "./config";
+ 
+-const API_BASE = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_BASE = API_BASE_URL;
+ const API_URL  = `${API_BASE}/api`;
+ const ISLA_KEY  = 5;   // ← Manipulación del Vidrio
+ const NIVEL_KEY = 23;  // ← Nivel Recordemos
+--- a/app/nivelcerebro8.tsx
++++ b/app/nivelcerebro8.tsx
+@@ -17,8 +17,9 @@
+   TouchableOpacity,
+   View,
+ } from "react-native";
++import { API_BASE_URL } from "./config";
+ 
+-const API_BASE = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_BASE = API_BASE_URL;
+ const API_URL  = `${API_BASE}/api`;
+ const ISLA_KEY  = 7;   // ← Lectura OF
+ const NIVEL_KEY = 33;  // ← Nivel Recordemos
+--- a/app/nivellectura1.tsx
++++ b/app/nivellectura1.tsx
+@@ -16,6 +16,7 @@
+ } from "react-native";
+ import { PanGestureHandler, State } from "react-native-gesture-handler";
+ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
++import { API_BASE_URL } from "./config";
+ 
+ /* ---------- Constantes ---------- */
+ const { width } = Dimensions.get("window");
+@@ -196,7 +197,7 @@
+ export default function NivelLectura() {
+   const router = useRouter();
+ 
+-  const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++  const API_URL = API_BASE_URL;
+   const NIVEL_KEY = 2;
+ 
+   const [usuarioKey, setUsuarioKey] = useState<number | null>(null);
+--- a/app/nivellectura2.tsx
++++ b/app/nivellectura2.tsx
+@@ -13,13 +13,14 @@
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ /* =========================================================
+    ✅ CONFIG GENERAL
+    ========================================================= */
+ const fondo = require("../assets/FONDOREG.png");
+ const RUTA_VOLVER = "/HSE";
+-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL = API_BASE_URL;
+ const NIVEL_KEY_API = 7;
+ const ISLA_KEY = 2;
+ 
+--- a/app/nivellectura3.tsx
++++ b/app/nivellectura3.tsx
+@@ -11,13 +11,14 @@
+ } from "react-native";
+ import { scaleDP } from "./scale";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ /* =========================================================
+    CONFIG
+    ========================================================= */
+ const fondo = require("../assets/FONDOREG.png");
+ const RUTA_VOLVER = "/Procesos";
+-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL = API_BASE_URL;
+ const ISLA_KEY = 3;
+ const NIVEL_KEY_API = 12;
+ const NIVEL_KEY_PROG = 2;
+--- a/app/nivellectura4.tsx
++++ b/app/nivellectura4.tsx
+@@ -16,6 +16,7 @@
+ } from "react-native";
+ import { PanGestureHandler, State } from "react-native-gesture-handler";
+ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
++import { API_BASE_URL } from "./config";
+ 
+ /* ---------- Constantes ---------- */
+ const { width } = Dimensions.get("window");
+@@ -106,7 +107,7 @@
+ /* ---------- Constantes isla ---------- */
+ const ISLA_KEY       = 4;
+ const NIVEL_KEY      = 17;
+-const API_URL_DEFAULT = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL_DEFAULT = API_BASE_URL;
+ 
+ /* ---------- Pantalla principal ---------- */
+ export default function NivelLectura4() {
+--- a/app/nivellectura5.tsx
++++ b/app/nivellectura5.tsx
+@@ -12,13 +12,14 @@
+   Vibration,
+   View,
+ } from "react-native";
++import { API_BASE_URL } from "./config";
+ 
+ /* =========================================================
+    CONFIG
+    ========================================================= */
+ const ISLA_KEY  = 8;
+ const NIVEL_KEY = 37;
+-const API_URL   = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL   = API_BASE_URL;
+ const MAX_LIVES = 5;
+ 
+ function scoreFromLives(lives: number): number {
+--- a/app/nivellectura6.tsx
++++ b/app/nivellectura6.tsx
+@@ -11,13 +11,14 @@
+ } from "react-native";
+ import { scaleDP } from "./scale";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ /* =========================================================
+    CONFIG
+    ========================================================= */
+ const fondo = require("../assets/FONDOREG.png");
+ const RUTA_VOLVER = "/Metrologia";
+-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL = API_BASE_URL;
+ const ISLA_KEY = 6;
+ const NIVEL_KEY_API = 27;
+ const NIVEL_KEY_PROG = 2;
+--- a/app/nivellectura7.tsx
++++ b/app/nivellectura7.tsx
+@@ -16,6 +16,7 @@
+ } from "react-native";
+ import { PanGestureHandler, State } from "react-native-gesture-handler";
+ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
++import { API_BASE_URL } from "./config";
+ 
+ /* ---------- Constantes ---------- */
+ const { width } = Dimensions.get("window");
+@@ -168,7 +169,7 @@
+ export default function NivelLecturaManipulacion() {
+   const router = useRouter();
+ 
+-  const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++  const API_URL = API_BASE_URL;
+ 
+   // ── Anclaje isla Manipulación del Vidrio ──
+   const ISLA_KEY  = 5;
+--- a/app/nivellectura8.tsx
++++ b/app/nivellectura8.tsx
+@@ -11,13 +11,14 @@
+ } from "react-native";
+ import { scaleDP } from "./scale";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ /* =========================================================
+    CONFIG
+    ========================================================= */
+ const fondo = require("../assets/FONDOREG.png");
+ const RUTA_VOLVER = "/LecturaOF"; // ⚠️ ajusta al nombre real de tu archivo del mapa
+-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL = API_BASE_URL;
+ const ISLA_KEY  = 7;   // ← Lectura OF
+ const NIVEL_KEY = 32;  // ← Nivel Lectura
+ const MAX_LIVES = 3;
+--- a/app/nivelsocial1.tsx
++++ b/app/nivelsocial1.tsx
+@@ -13,10 +13,11 @@
+   View,
+ } from "react-native";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ const fondo = require("../assets/FONDOREG.png");
+ 
+-const API_BASE = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_BASE = API_BASE_URL;
+ const API_URL = `${API_BASE}/api`;
+ const ISLA_KEY = 1;
+ const NIVEL_KEY_RECORDEMOS = 3;
+--- a/app/nivelsocial2.tsx
++++ b/app/nivelsocial2.tsx
+@@ -13,13 +13,14 @@
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ /* =========================================================
+    ✅ CONFIG GENERAL
+    ========================================================= */
+ const fondo = require("../assets/FONDOREG.png");
+ const RUTA_VOLVER = "/HSE";
+-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL = API_BASE_URL;
+ const ISLA_KEY = 2;
+ const NIVEL_KEY_API = 9;
+ const MAX_LIVES = 5;
+--- a/app/nivelsocial3.tsx
++++ b/app/nivelsocial3.tsx
+@@ -12,13 +12,14 @@
+ } from "react-native";
+ import { scaleDP } from "./scale";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ /* =========================================================
+    ✅ CONFIG GENERAL
+    ========================================================= */
+ const fondo = require("../assets/FONDOREG.png");
+ const RUTA_VOLVER = "/Procesos";
+-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL = API_BASE_URL;
+ const ISLA_KEY = 3;
+ const NIVEL_KEY_API = 14;
+ const NIVEL_KEY_PROG = 4;
+--- a/app/nivelsocial4.tsx
++++ b/app/nivelsocial4.tsx
+@@ -13,6 +13,7 @@
+   Vibration,
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ const { width, height } = Dimensions.get("window");
+ 
+@@ -23,7 +24,7 @@
+ const avatarQuieto = require("../assets/operario_quieto.gif");
+ const avatarSalto  = require("../assets/salto_der.gif");
+ 
+-const API_URL       = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL       = API_BASE_URL;
+ const ISLA_KEY      = 4;
+ const NIVEL_KEY     = 19;
+ const RUTA_VOLVER   = "/Conceptos";
+--- a/app/nivelsocial5.tsx
++++ b/app/nivelsocial5.tsx
+@@ -12,6 +12,7 @@
+   Vibration,
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ const { width, height } = Dimensions.get("window");
+ 
+@@ -20,7 +21,7 @@
+ ========================================================= */
+ const fondo = require("../assets/fondofinal.png");
+ 
+-const API_URL   = process.env.EXPO_PUBLIC_API_URL || "http://172.16.61.81:3001";
++const API_URL   = API_BASE_URL;
+ const ISLA_KEY  = 8;
+ const NIVEL_KEY = 39;
+ const RUTA_VOLVER = "/Calidad";
+--- a/app/nivelsocial6.tsx
++++ b/app/nivelsocial6.tsx
+@@ -12,13 +12,14 @@
+ } from "react-native";
+ import { scaleDP } from "./scale";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ /* =========================================================
+    CONFIG
+ ========================================================= */
+ const fondo       = require("../assets/FONDOREG.png");
+ const RUTA_VOLVER = "/Metrologia";
+-const API_URL     = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL     = API_BASE_URL;
+ const ISLA_KEY        = 6;
+ const NIVEL_KEY_API   = 29;
+ const NIVEL_KEY_PROG  = 39;
+--- a/app/nivelsocial7.tsx
++++ b/app/nivelsocial7.tsx
+@@ -13,6 +13,7 @@
+   Vibration,
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ const { width, height } = Dimensions.get("window");
+ 
+@@ -23,7 +24,7 @@
+ const avatarQuieto = require("../assets/operario_quieto.gif");
+ const avatarSalto  = require("../assets/salto_der.gif");
+ 
+-const API_URL       = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL       = API_BASE_URL;
+ const ISLA_KEY      = 5;   // ← Manipulación del Vidrio
+ const NIVEL_KEY     = 24;  // ← Nivel Social
+ const RUTA_VOLVER   = "/Manipulacion"; // ⚠️ ajusta al nombre real de tu archivo del mapa
+--- a/app/nivelsocial8.tsx
++++ b/app/nivelsocial8.tsx
+@@ -13,13 +13,14 @@
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ /* =========================================================
+    ✅ CONFIG GENERAL
+    ========================================================= */
+ const fondo = require("../assets/FONDOREG.png");
+ const RUTA_VOLVER = "/LecturaOF"; // ⚠️ ajusta al nombre real de tu archivo del mapa
+-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL = API_BASE_URL;
+ const ISLA_KEY  = 7;   // ← Lectura OF
+ const NIVEL_KEY = 34;  // ← Nivel Social
+ const MAX_LIVES = 5;
+--- a/app/nivelvisual1.tsx
++++ b/app/nivelvisual1.tsx
+@@ -15,6 +15,7 @@
+   View,
+ } from "react-native";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ // ====== CONSTANTES PARA VIDAS / NOTA ======
+ const MAX_LIVES = 5;
+@@ -132,7 +133,7 @@
+     }
+     return cleaned;
+   }
+-  const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++  const API_URL = API_BASE_URL;
+   if (u.startsWith("http://") || u.startsWith("https://")) return u;
+   if (u.startsWith("/")) return `${API_URL}${u}`;
+   return u;
+@@ -142,7 +143,7 @@
+   const router = useRouter();
+   const fondo = require("../assets/islas/fondogeneral.png");
+ 
+-  const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++  const API_URL = API_BASE_URL;
+   const NIVEL_KEY = 1;
+ 
+   const [usuarioKey, setUsuarioKey] = useState<number | null>(null);
+--- a/app/nivelvisual2.tsx
++++ b/app/nivelvisual2.tsx
+@@ -17,13 +17,14 @@
+ import AsyncStorage from "@react-native-async-storage/async-storage";
+ import Svg, { Line } from "react-native-svg";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ /* =========================================================
+    ✅ CONFIG GENERAL
+    ========================================================= */
+ const fondo = require("../assets/islas/fondogeneral.png");
+ const RUTA_VOLVER = "/HSE";
+-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL = API_BASE_URL;
+ const NIVEL_KEY = 6;
+ const ISLA_KEY = 2;
+ const NUM_MODULES = 5;
+--- a/app/nivelvisual2_new.tsx
++++ b/app/nivelvisual2_new.tsx
+@@ -16,9 +16,10 @@
+ import AsyncStorage from "@react-native-async-storage/async-storage";
+ import Svg, { Line } from "react-native-svg";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ const fondo   = require("../assets/islas/fondogeneral.png");
+-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL = API_BASE_URL;
+ 
+ // ── Config ──────────────────────────────────────────────────────────────────
+ const NIVEL_KEY_API      = 6;
+--- a/app/nivelvisual3.tsx
++++ b/app/nivelvisual3.tsx
+@@ -15,13 +15,14 @@
+   Vibration,
+   View,
+ } from "react-native";
++import { API_BASE_URL } from "./config";
+ 
+ /* =========================================================
+    CONFIG
+    ========================================================= */
+ const fondo = require("../assets/islas/fondogeneral.png");
+ const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL = API_BASE_URL;
+ const ISLA_KEY = 3;
+ const NIVEL_KEY_PROG = 11;
+ const MOD1_LIVES = 5;
+--- a/app/nivelvisual4.tsx
++++ b/app/nivelvisual4.tsx
+@@ -14,13 +14,14 @@
+   Vibration,
+   View,
+ } from "react-native";
++import { API_BASE_URL } from "./config";
+ 
+ /* =========================================================
+    CONFIG
+    ========================================================= */
+ const fondo = require("../assets/islas/fondogeneral.png");
+ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL = API_BASE_URL;
+ const ISLA_KEY       = 4;
+ const NIVEL_KEY_PROG = 16;
+ const TOTAL_LIVES    = 5;
+--- a/app/nivelvisual5.tsx
++++ b/app/nivelvisual5.tsx
+@@ -13,13 +13,14 @@
+   Vibration,
+   View,
+ } from "react-native";
++import { API_BASE_URL } from "./config";
+ 
+ /* =========================================================
+    CONFIG
+    ========================================================= */
+ const fondo = require("../assets/islas/fondogeneral.png");
+ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+-const API_URL        = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL        = API_BASE_URL;
+ const ISLA_KEY       = 8;
+ const NIVEL_KEY_PROG = 36;
+ const TOTAL_LIVES    = 3;
+--- a/app/nivelvisual6.tsx
++++ b/app/nivelvisual6.tsx
+@@ -15,6 +15,7 @@
+   View,
+ } from "react-native";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ /* =========================================================
+    CONFIG
+@@ -27,7 +28,7 @@
+ const FREE_MISSES  = 5;
+ const ERRORS_PER_LIFE = 2;
+ 
+-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL = API_BASE_URL;
+ 
+ /* =========================================================
+    SCORE / VIDAS
+--- a/app/nivelvisual7.tsx
++++ b/app/nivelvisual7.tsx
+@@ -16,6 +16,7 @@
+ import { PanGestureHandler, State } from "react-native-gesture-handler";
+ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+ import { scaleDP } from "./scale";
++import { API_BASE_URL } from "./config";
+ 
+ /* =========================================================
+    CONFIG
+@@ -23,7 +24,7 @@
+ const fondo = require("../assets/FONDOREG.png");
+ const RUTA_VOLVER = "/Manipulacion"; // ⚠️ ajusta al nombre real de tu archivo del mapa
+ 
+-const API_URL   = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL   = API_BASE_URL;
+ const ISLA_KEY  = 5;   // ← Manipulación del Vidrio
+ const NIVEL_KEY = 21;  // ← Nivel Visual
+ 
+--- a/app/podio.tsx
++++ b/app/podio.tsx
+@@ -11,8 +11,9 @@
+ } from "react-native";
+ import { useRouter, useLocalSearchParams } from "expo-router";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+-const API_BASE = `${process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001"}/api`;
++const API_BASE = `${API_BASE_URL}/api`;
+ 
+ type Player = {
+   usuarioKey: number;
+--- a/app/registration.tsx
++++ b/app/registration.tsx
+@@ -13,11 +13,12 @@
+   View,
+ } from "react-native";
+ import AsyncStorage from "@react-native-async-storage/async-storage";
++import { API_BASE_URL } from "./config";
+ 
+ // 🔗 API (Node + Express + SQL Server)
+ 
+ 
+-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://172.16.60.75:3001";
++const API_URL = API_BASE_URL;
+ 
+ export default function RegistrationScreen() {
+   const router = useRouter();

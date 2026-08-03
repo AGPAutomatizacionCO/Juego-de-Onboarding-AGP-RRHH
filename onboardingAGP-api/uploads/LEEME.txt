@@ -1,0 +1,2 @@
+# Carpeta requerida por multer (adminUpload.routes.js).
+# Si no existe, la subida de imagenes del panel admin falla.

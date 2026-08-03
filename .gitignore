@@ -1,0 +1,24 @@
+# Dependencias
+node_modules/
+
+# Artefactos de compilacion
+android/
+ios/
+dist/
+web-build/
+*.apk
+*.aab
+
+# Secretos y claves — NUNCA versionar
+.env
+.env.local
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+
+# Cachés
+.expo/
+.gradle/
+*.tsbuildinfo
