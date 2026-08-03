@@ -1,8 +1,8 @@
 **Asunto:** Juego de Onboarding AGP — Servicio restablecido (AGP-CO-ONBOARDING-B15)
 
-Buen día,
+Buen día y feliz inicio de semana,
 
-El servicio del juego de inducción quedó **restablecido y validado**. Comparto el resumen; el detalle técnico está documentado en el repositorio indicado al final.
+Confirmo que el servicio del juego de inducción quedó restablecido y validado. Comparto el resumen; el detalle técnico está documentado en el repositorio indicado al final.
 
 ---
 
@@ -14,81 +14,110 @@ Determinar por qué las tablets de planta no podían acceder al juego de inducci
 
 **El equipo que hospedaba el servicio de datos se dio de baja.** La aplicación tenía su dirección —`172.16.60.75`— grabada de forma permanente dentro del instalador. Al retirarse el equipo, esa dirección fue reasignada a otro computador de producción (`PREENSAMB-COEM`), que nunca tuvo el servicio.
 
-La base de datos estaba correcta y no requirió cambios: 12 tablas en `AGP_RRHH`, con 72 participantes y 317 resultados registrados.
+La base de datos estaba correcta y no requirió cambios: 12 tablas en `AGP_RRHH`, con 72 participantes y 317 resultados registrados al momento de realizar las pruebas.
 
 La causa de fondo es que la dirección estaba repetida **64 veces en 46 archivos**, sin forma de redirigirla sin recompilar e reinstalar en cada tablet.
 
 ## Qué se hizo
 
-- **Se centralizó la dirección del servicio** en un único punto configurable. Esto es lo que evita que la falla se repita: un cambio futuro de servidor se resuelve en una línea.
-- **Se corrigieron tres defectos funcionales adicionales** encontrados en la revisión: tres niveles no guardaban los puntajes en la base de datos (falla silenciosa, el participante veía el nivel aprobado); el guardado de la evaluación final fallaba siempre; y tres puntos del código imprimían credenciales en registros.
-- **Se migró el servicio a Azure**, eliminando la dependencia de equipos de escritorio.
-- **Se generó un instalador nuevo** con capacidad propia de AGP, sin depender de la cuenta del proveedor.
+**Se centralizó la dirección del servicio** en un único punto configurable. Esto es lo que evita que la falla se repita: un cambio futuro de servidor se resuelve en una línea.
+
+**Se corrigieron tres defectos funcionales adicionales** encontrados en la revisión: tres niveles no guardaban los puntajes en la base de datos (falla silenciosa, el participante veía el nivel aprobado); el guardado de la evaluación final fallaba siempre; y tres puntos del código imprimían credenciales en registros.
+
+**Se migró el servicio a Azure**, eliminando la dependencia de equipos de escritorio.
+
+**Se generó un instalador nuevo** con capacidad propia de AGP, sin depender de la cuenta del proveedor.
 
 ## Servicios creados en Azure
 
-| Elemento | Nombre |
-|---|---|
-| Suscripción | `Microsoft Azure (agpglass): #1181528` |
-| Grupo de recursos | `AGP-Colombia` *(existente)* |
-| Plan de App Service | `plan-juego-rrhh-onboarding` — **F1 (Free) · Linux · East US** |
-| Aplicación | `agp-juego-rrhh-onboarding` |
-| **Dirección del servicio** | **https://agp-juego-rrhh-onboarding.azurewebsites.net** |
-| Runtime | Node 24 LTS |
-| Base de datos | `agpcolombia.database.windows.net` / `AGP_RRHH` — **sin cambios** |
+**Suscripción:** Microsoft Azure (agpglass): #1181528
+**Grupo de recursos:** AGP-Colombia (existente)
+**Plan de App Service:** plan-juego-rrhh-onboarding — F1 (Free) · Linux · East US
+**Aplicación:** agp-juego-rrhh-onboarding
+**Dirección del servicio:** https://agp-juego-rrhh-onboarding.azurewebsites.net
+**Runtime:** Node 24 LTS
+**Base de datos:** agpcolombia.database.windows.net / AGP_RRHH — sin cambios
 
-Región East US por coincidir con la del servidor de base de datos. **Costo actual: cero**, verificado contra la API oficial de precios de Azure.
+Región East US por coincidir con la del servidor de base de datos. Costo actual: cero, verificado contra la API oficial de precios de Azure.
 
-Configuración de seguridad aplicada: credenciales en la configuración del servicio y no en archivos, **HTTPS obligatorio** (antes las cédulas viajaban sin cifrar), y restricción de acceso por IP con denegación por defecto.
+Configuración de seguridad aplicada: credenciales en la configuración del servicio y no en archivos, HTTPS obligatorio (antes las cédulas viajaban sin cifrar), y restricción de acceso por IP con denegación por defecto.
 
 Validado: estado del servicio, conexión a base de datos, catálogo de contenido devolviendo las 9 islas, y rechazo de tráfico sin cifrar.
 
 ## Entregado
 
-| Entregable | Detalle |
-|---|---|
-| `OnboardingGame-1.0.1-AGP.apk` | Instalador firmado · `com.onboardinggame.juegoapp` · v1.0.1 |
-| `agp-onboarding-release.jks` | Clave de firma propiedad de AGP, con sus contraseñas |
+**OnboardingGame-1.0.1-AGP.apk** — instalador firmado, identificador `com.onboardinggame.juegoapp`, versión 1.0.1.
 
-**La aplicación anterior debe desinstalarse antes de instalar la nueva** — la clave de firma es distinta a la del proveedor y Android no permite actualizar sobre una firma diferente. El progreso de los participantes no se pierde: reside en la base de datos y se recupera al ingresar con la cédula.
+**agp-onboarding-release.jks** — clave de firma propiedad de AGP, con sus contraseñas.
+
+La aplicación anterior debe desinstalarse antes de instalar la nueva: la clave de firma es distinta a la del proveedor y Android no permite actualizar sobre una firma diferente. El progreso de los participantes no se pierde, reside en la base de datos y se recupera al ingresar con la cédula.
+
+## Cómo obtener e instalar el instalador
+
+El APK se publica como **release** del repositorio, no como archivo dentro del código. Es la forma correcta de conservar binarios: no se puede versionar un archivo de ese tamaño en el historial, y al ser un producto compilado se regenera desde el código cuando se necesite.
+
+Descarga:
+https://github.com/AGPAutomatizacionCO/Juego-de-Onboarding-AGP-RRHH/releases/tag/v1.0.1
+
+Cada versión futura tendrá su propio release, de modo que queda registro histórico de todos los instaladores publicados. Esto reemplaza el enlace del proveedor, que dejó de estar disponible y fue lo que dificultó recuperar el instalador original.
+
+Dos consideraciones de uso:
+
+**La descarga requiere autenticación en GitHub**, porque el repositorio es privado. Si se necesita que las tablets descarguen el archivo directamente sin credenciales, la alternativa es publicarlo en Azure Blob Storage con un enlace temporal.
+
+**La dirección del servicio queda incrustada en el instalador.** Este APK apunta a la dirección de Azure indicada arriba. Si el servicio cambia de URL, el instalador deja de funcionar y hay que generar uno nuevo.
 
 ## Pendiente
 
-**1 · Prueba en las tablets.** Es lo único que falta para cerrar. **Conviene realizarla pronto**; de lo contrario habrá que abrir un ticket nuevo para retomarlo.
+**1 · Prueba en las tablets.** Es lo único que falta para cerrar. Conviene realizarla pronto; de lo contrario habrá que abrir un ticket nuevo para retomarlo.
 
-**2 · IP públicas de salida de la red de planta.** Hoy están autorizadas dos direcciones puntuales, medidas durante la intervención. Se detectó que el tráfico de AGP sale por **varias direcciones distintas** —se midieron dos desde el mismo equipo en minutos, y se identificaron al menos nueve en bloques diferentes—, comportamiento propio de múltiples enlaces con balanceo.
+**2 · IP públicas de salida de la red de planta.** Hoy están autorizadas dos direcciones puntuales, medidas durante la intervención. Se detectó que el tráfico de AGP sale por varias direcciones distintas —se midieron dos desde el mismo equipo en minutos, y se identificaron al menos nueve en bloques diferentes—, comportamiento propio de múltiples enlaces con balanceo.
 
-Si una tablet sale por una dirección no autorizada, el servicio la rechazará y el juego se verá caído de forma intermitente, que es el escenario más difícil de diagnosticar. Se requiere del área de Redes: **cuántos enlaces tiene la red de planta y sus IP públicas de salida, o el bloque asignado**.
+Si una tablet sale por una dirección no autorizada, el servicio la rechazará y el juego se verá caído de forma intermitente, que es el escenario más difícil de diagnosticar. Se requiere del área de Redes: cuántos enlaces tiene la red de planta y sus IP públicas de salida, o el bloque asignado.
 
 ## Hallazgos ajenos al alcance
 
-Detectados de forma incidental. **No dependen del juego y su urgencia es mayor**; corresponden al área que administre el servidor de base de datos.
+Detectados de forma incidental. No dependen del juego y su urgencia es mayor; corresponden al área que administre el servidor de base de datos.
 
-- **Regla de firewall abierta.** El servidor `agpcolombia` tiene una regla `Base IPs` con el rango `160.0.0.0 – 205.0.0.0`: unos 750 millones de direcciones públicas.
-- **Credencial comprometida y vigente.** La contraseña del usuario SQL `Apps` venía en texto plano en el paquete del proveedor. Ese usuario tiene permisos de lectura, escritura y modificación de esquema sobre **toda** la base `AGP_RRHH`, que contiene nombres y cédulas de empleados.
+**Regla de firewall abierta.** El servidor `agpcolombia` tiene una regla `Base IPs` con el rango 160.0.0.0 – 205.0.0.0: unos 750 millones de direcciones públicas.
+
+**Credencial comprometida y vigente.** La contraseña del usuario SQL `Apps` venía en texto plano en el paquete del proveedor. Ese usuario tiene permisos de lectura, escritura y modificación de esquema sobre toda la base `AGP_RRHH`, que contiene nombres y cédulas de empleados.
 
 ## Observaciones sobre el plan de Azure
 
-El nivel **F1 es gratuito y sirvió para validar, pero no para operación sostenida**: 60 minutos de CPU al día y suspensión por inactividad. Alcanza para pruebas con una o dos tablets, no para una jornada con varios participantes simultáneos. Referencia de migración a nivel Basic: aproximadamente 12,40 USD mensuales.
+El nivel F1 es gratuito y sirvió para validar, pero no para operación sostenida: 60 minutos de CPU al día y suspensión por inactividad. Alcanza para pruebas con una o dos tablets, no para una jornada con varios participantes simultáneos. Referencia de migración a nivel Basic: aproximadamente 12,40 USD mensuales.
 
 ---
 
 ## Documentación
 
-Todo el detalle técnico está versionado en:
+Todo el detalle técnico quedó versionado en el repositorio corporativo:
 
-**https://github.com/AGPAutomatizacionCO/Juego-de-Onboarding-AGP-RRHH**
+https://github.com/AGPAutomatizacionCO/Juego-de-Onboarding-AGP-RRHH
 
-| Documento | Contenido |
-|---|---|
-| `project-card.md` | Ficha de registro del proyecto |
-| `specs/003-tasks.md` | Estado de las 13 tareas con responsables |
-| `specs/005-risks.md` | 12 riesgos identificados, con impacto y mitigación |
-| `specs/007-deployment-notes.md` | Procedimientos de despliegue y compilación |
-| `specs/009-change-log.md` | Registro completo de cada cambio y verificación |
-| `ai/decisions/` | Decisiones tomadas, pendientes de validación formal |
-| `parches/` | Los cuatro cambios de código, aplicables al repositorio del proveedor |
-| `PRUEBAS-LOCALES.md` | Guía para reproducir el entorno |
+**Ficha de registro del proyecto**
+https://github.com/AGPAutomatizacionCO/Juego-de-Onboarding-AGP-RRHH/blob/main/project-card.md
+
+**Estado de las 13 tareas con responsables**
+https://github.com/AGPAutomatizacionCO/Juego-de-Onboarding-AGP-RRHH/blob/main/specs/003-tasks.md
+
+**12 riesgos identificados, con impacto y mitigación**
+https://github.com/AGPAutomatizacionCO/Juego-de-Onboarding-AGP-RRHH/blob/main/specs/005-risks.md
+
+**Procedimientos de despliegue y compilación**
+https://github.com/AGPAutomatizacionCO/Juego-de-Onboarding-AGP-RRHH/blob/main/specs/007-deployment-notes.md
+
+**Registro completo de cada cambio y verificación**
+https://github.com/AGPAutomatizacionCO/Juego-de-Onboarding-AGP-RRHH/blob/main/specs/009-change-log.md
+
+**Decisiones tomadas, pendientes de validación formal**
+https://github.com/AGPAutomatizacionCO/Juego-de-Onboarding-AGP-RRHH/tree/main/ai/decisions
+
+**Los cuatro cambios de código, aplicables al repositorio del proveedor**
+https://github.com/AGPAutomatizacionCO/Juego-de-Onboarding-AGP-RRHH/tree/main/parches
+
+**Guía para reproducir el entorno**
+https://github.com/AGPAutomatizacionCO/Juego-de-Onboarding-AGP-RRHH/blob/main/PRUEBAS-LOCALES.md
 
 Incluye además los puntos que quedaron abiertos y no requieren acción inmediata: la ausencia de mecanismo de actualización remota, la custodia de la clave de firma, la falta de monitoreo del servicio, y dos aclaraciones pendientes con el proveedor sobre funcionalidad incompleta.
 
