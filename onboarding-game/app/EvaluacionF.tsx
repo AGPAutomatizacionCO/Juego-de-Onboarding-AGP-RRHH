@@ -624,6 +624,7 @@ export default function EvaluacionFinalGeneral() {
   const [podioLoading,     setPodioLoading]     = useState(false);
   const [showIncomplete,   setShowIncomplete]   = useState(false);
   const [missingCount,     setMissingCount]     = useState(0);
+  const [reintentoPendiente, setReintentoPendiente] = useState(false);
 
   const transOpacity = useRef(new Animated.Value(1)).current;
   const transX       = useRef(new Animated.Value(0)).current;
@@ -656,6 +657,11 @@ export default function EvaluacionFinalGeneral() {
           const r = await apiJson(`${API_BASE}/evaluacionFinal/resultado/${finalUk}/${NIVEL_KEY}`);
           const pct = Number(r?.data?.puntaje ?? 0);
           if (pct > 0) setSavedPct(Number.isFinite(pct) ? pct : 0);
+          if (r?.data?.reintentoHabilitado) {
+            setReintentoPendiente(true);
+            setShowResult(false);
+            setShowIntro(true);
+          }
         } catch { setSavedPct(0); }
       }
     })();
@@ -672,6 +678,17 @@ export default function EvaluacionFinalGeneral() {
 
   /* ── Iniciar juego ── */
   const startGame = () => {
+    if (reintentoPendiente && usuarioKey) {
+      AsyncStorage.multiRemove([
+        `u:${usuarioKey}:isla${ISLA_KEY}_nivel${NIVEL_KEY}_evaluacion_done`,
+        `u:${usuarioKey}:isla${ISLA_KEY}_nivel${NIVEL_KEY}_evaluacion_score`,
+      ]);
+      apiJson(`${API_BASE}/evaluacionFinal/reintento/consumir`, {
+        method: "POST",
+        body: JSON.stringify({ usuarioKey, nivelKey: NIVEL_KEY }),
+      }).catch(() => {});
+      setReintentoPendiente(false);
+    }
     const shuffled = QUESTIONS_BASE.map((q) => shuffleQuestion(q));
     setQuestions(shuffled);
     setAnswersSingle({}); setAnswersMulti({}); setAnswersMatrix({}); setAnswersMatrixMulti({});
@@ -787,7 +804,7 @@ export default function EvaluacionFinalGeneral() {
     if (!nOn || nOn <= 0) { Alert.alert("Sin grupo", "No se encontró el número de onboarding."); return; }
     try {
       setPodioLoading(true);
-      const r = await apiJson(`${API_BASE}/evaluacionFinal/podio?nivelKey=${NIVEL_KEY}&numeroOnboarding=${nOn}`);
+      const r = await apiJson(`${API_BASE}/evaluacionFinal/podio-isla?islaKey=${ISLA_KEY}&numeroOnboarding=${nOn}`);
       setPlayers((r?.data || []).map((row: any, idx: number) => ({ id: String(row.usuarioKey ?? idx), nombre: row.nombre ?? "Sin nombre", puntaje: row.puntaje != null ? Number(row.puntaje) : null })));
     } catch (e: any) { Alert.alert("Error al cargar podio", e?.message || "No se pudo cargar."); setPlayers([]); }
     finally { setPodioLoading(false); }
@@ -877,7 +894,7 @@ export default function EvaluacionFinalGeneral() {
               <View style={{ width: MATRIX_LABEL_W }} />
               {q.columns.map((col) => (
                 <View key={col.key} style={st.mxColHeader}>
-                  <Text style={st.mxHeaderText} numberOfLines={3}>{col.label}</Text>
+                  <Text style={st.mxHeaderText}>{col.label}</Text>
                 </View>
               ))}
             </View>
@@ -886,7 +903,7 @@ export default function EvaluacionFinalGeneral() {
               return (
                 <View key={row.id} style={[st.mxRow, i % 2 === 0 && st.mxRowAlt]}>
                   <View style={[st.mxLabelCell, answered && st.mxLabelAnswered]}>
-                    <Text style={st.mxLabelText} numberOfLines={2}>{row.label}</Text>
+                    <Text style={st.mxLabelText}>{row.label}</Text>
                   </View>
                   {q.columns.map((col) => {
                     const sel = matAns[row.id] === col.key;
@@ -921,7 +938,7 @@ export default function EvaluacionFinalGeneral() {
               <View style={{ width: MATRIX_LABEL_W }} />
               {q.columns.map((col) => (
                 <View key={col.key} style={st.mxColHeader}>
-                  <Text style={st.mxHeaderText} numberOfLines={3}>{col.label}</Text>
+                  <Text style={st.mxHeaderText}>{col.label}</Text>
                 </View>
               ))}
             </View>
@@ -930,7 +947,7 @@ export default function EvaluacionFinalGeneral() {
               return (
                 <View key={row.id} style={[st.mxRow, i % 2 === 0 && st.mxRowAlt]}>
                   <View style={[st.mxLabelCell, selCols.length > 0 && st.mxLabelAnswered]}>
-                    <Text style={st.mxLabelText} numberOfLines={2}>{row.label}</Text>
+                    <Text style={st.mxLabelText}>{row.label}</Text>
                   </View>
                   {q.columns.map((col) => {
                     const sel = selCols.includes(col.key);

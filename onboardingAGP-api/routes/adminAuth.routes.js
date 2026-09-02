@@ -13,6 +13,9 @@ router.put("/niveles/:nivelKey/editor", adminAuthController.updateNivelEditor);
 // RESULTADOS (queda accesible por /api/admin/resultados/detalle)
 router.get("/resultados/detalle", adminAuthController.getResultadosDetalle);
 
+// REINTENTO (queda accesible por /api/admin/resultados/reintento)
+router.post("/resultados/reintento", adminAuthController.setReintentoHabilitado);
+
 // RESULTADOS RESUMEN (queda accesible por /api/admin/resultados/resumen)
 router.get("/resultados/resumen", adminAuthController.getResultadosResumen);
 

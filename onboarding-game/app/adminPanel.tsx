@@ -284,6 +284,7 @@ type ResultadoNivelMeta = {
   aprobado: boolean;
   intento: number | null;
   fecha: string | null;
+  reintentoHabilitado: boolean;
 };
 
 function filasResumenResultadoNivel(meta: ResultadoNivelMeta | null) {
@@ -720,6 +721,7 @@ export default function AdminPanel() {
               aprobado: Boolean(rawMeta.aprobado),
               intento: rawMeta.intento != null ? Number(rawMeta.intento) : null,
               fecha: rawMeta.fecha != null ? String(rawMeta.fecha) : null,
+              reintentoHabilitado: Boolean(rawMeta.reintentoHabilitado),
             }
           : null;
         const p = r?.puntajeFinal;
@@ -740,6 +742,41 @@ export default function AdminPanel() {
       }
     },
     [API_URL, selectedUserObj, detalleCache]
+  );
+
+  /* ========================= REINTENTO ========================= */
+
+  const [reintentoLoading, setReintentoLoading] = useState<string | null>(null);
+
+  const toggleReintento = useCallback(
+    async (nivel: Nivel, habilitar: boolean) => {
+      if (!selectedUserObj) return;
+      setReintentoLoading(nivel.id);
+      try {
+        await apiJson(`${API_URL}/api/admin/resultados/reintento`, {
+          method: "POST",
+          body: JSON.stringify({
+            usuarioKey: selectedUserObj.usuarioKey,
+            nivelKey: Number(nivel.id),
+            habilitar,
+          }),
+          timeoutMs: 30000,
+        });
+        setDetalleCache((prev) => {
+          const next = new Map(prev);
+          const cur = next.get(nivel.id);
+          if (cur?.meta) {
+            next.set(nivel.id, { ...cur, meta: { ...cur.meta, reintentoHabilitado: habilitar } });
+          }
+          return next;
+        });
+      } catch (e: any) {
+        Alert.alert("Error", e?.message || "No se pudo actualizar el permiso de reintento.");
+      } finally {
+        setReintentoLoading(null);
+      }
+    },
+    [API_URL, selectedUserObj]
   );
 
   /* ========================= EDITOR ========================= */
@@ -1076,6 +1113,28 @@ export default function AdminPanel() {
                             <Text style={styles.expandedMetaValue}>{row.value}</Text>
                           </View>
                         ))}
+
+                        {/* Reintento: solo tiene sentido si ya hay un resultado guardado */}
+                        {cached.meta && (
+                          <TouchableOpacity
+                            style={[
+                              styles.reintentoBtn,
+                              cached.meta.reintentoHabilitado && styles.reintentoBtnOn,
+                            ]}
+                            disabled={reintentoLoading === nivel.id}
+                            onPress={() =>
+                              toggleReintento(nivel, !cached.meta!.reintentoHabilitado)
+                            }
+                          >
+                            <Text style={styles.reintentoBtnText}>
+                              {reintentoLoading === nivel.id
+                                ? "Actualizando..."
+                                : cached.meta.reintentoHabilitado
+                                ? "Reintento habilitado (tocar para cancelar)"
+                                : "Habilitar reintento"}
+                            </Text>
+                          </TouchableOpacity>
+                        )}
 
                         {/* Respuestas */}
                         {cached.preguntas.length > 0 ? (
@@ -1773,6 +1832,16 @@ const styles = StyleSheet.create({
   },
   expandedMetaLabel: { fontFamily: "PlusJakartaSans-Bold", fontSize: sp(12), color: "#374151" },
   expandedMetaValue: { fontFamily: "PlusJakartaSans-Regular", fontSize: sp(13), color: "#111827" },
+  reintentoBtn: {
+    backgroundColor: "#0F1B4C",
+    borderRadius: sp(8),
+    paddingVertical: sp(10),
+    alignItems: "center",
+    marginTop: sp(6),
+    marginBottom: sp(4),
+  },
+  reintentoBtnOn: { backgroundColor: "#16A34A" },
+  reintentoBtnText: { fontFamily: "PlusJakartaSans-Bold", fontSize: sp(12), color: "#FFFFFF" },
   expandedSectionTitle: { fontFamily: "PlusJakartaSans-Bold", fontSize: sp(14), color: "#0F1B4C", marginTop: sp(10), marginBottom: sp(6) },
   expandedPreguntaRow: {
     flexDirection: "row",

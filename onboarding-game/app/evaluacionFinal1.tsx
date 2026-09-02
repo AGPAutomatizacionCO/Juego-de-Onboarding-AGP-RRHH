@@ -114,6 +114,7 @@ export default function NivelEvaluacionFinal() {
   const [usuarioKey,       setUsuarioKey]       = useState<number | null>(null);
   const [numeroOnboarding, setNumeroOnboarding] = useState<number | null>(null);
   const [savedPct,         setSavedPct]         = useState<number>(0);
+  const [reintentoPendiente, setReintentoPendiente] = useState(false);
 
   const [showIntro,  setShowIntro]  = useState(true);
   const [showGame,   setShowGame]   = useState(false);
@@ -178,7 +179,20 @@ export default function NivelEvaluacionFinal() {
   }
 
   const current  = useMemo(() => questions[qIndex], [questions, qIndex]);
-  const startGame = () => { setShowIntro(false); setShowGame(true); };
+  const startGame = () => {
+    if (reintentoPendiente && usuarioKey) {
+      AsyncStorage.multiRemove([
+        `u:${usuarioKey}:isla1_nivel5_evaluacion_done`,
+        `u:${usuarioKey}:isla1_nivel5_evaluacion_score`,
+      ]);
+      apiJson(`${API_BASE}/evaluacionFinal/reintento/consumir`, {
+        method: "POST",
+        body: JSON.stringify({ usuarioKey, nivelKey: NIVEL_KEY }),
+      }).catch(() => {});
+      setReintentoPendiente(false);
+    }
+    setShowIntro(false); setShowGame(true);
+  };
 
   useEffect(() => {
     (async () => {
@@ -202,6 +216,11 @@ export default function NivelEvaluacionFinal() {
           const r = await apiJson(`${API_BASE}/evaluacionFinal/resultado/${finalUk}/${NIVEL_KEY}`);
           const pct = Number(r?.data?.puntaje ?? 0);
           if (pct > 0) setSavedPct(Number.isFinite(pct) ? pct : 0);
+          if (r?.data?.reintentoHabilitado) {
+            setReintentoPendiente(true);
+            setShowResult(false);
+            setShowIntro(true);
+          }
         } catch { setSavedPct(0); }
       }
     })();
@@ -285,7 +304,7 @@ export default function NivelEvaluacionFinal() {
     if (!nOn || nOn <= 0) { Alert.alert("Sin grupo", "No se encontró el número de onboarding."); return; }
     try {
       setPodioLoading(true);
-      const r = await apiJson(`${API_BASE}/evaluacionFinal/podio?nivelKey=${NIVEL_KEY}&numeroOnboarding=${nOn}`);
+      const r = await apiJson(`${API_BASE}/evaluacionFinal/podio-isla?islaKey=${ISLA_KEY}&numeroOnboarding=${nOn}`);
       setPlayers((r?.data || []).map((row: any, idx: number) => ({
         id: String(row.usuarioKey ?? idx),
         nombre: row.nombre ?? "Sin nombre",

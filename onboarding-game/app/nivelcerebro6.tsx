@@ -28,22 +28,12 @@ const MAX_HINTS   = 4;
 const FIXED_SCORE = 100;
 
 /*
-  CRUCES VERIFICADOS:
-  H1. MICROMETRO  fila=0, col=0  → M(0)I(1)C(2)R(3)O(4)M(5)E(6)T(7)R(8)O(9)
-  H2. FLEXOMETRO  fila=4, col=1  → F(0)L(1)E(2)X(3)O(4)M(5)E(6)T(7)R(8)O(9)
-  H3. VACUOMETRO  fila=6, col=1  → V(0)A(1)C(2)U(3)O(4)M(5)E(6)T(7)R(8)O(9)
-
-  V1. METROLOGIA  fila=0, col=5  → M(0)E(1)T(2)R(3)O(4)L(5)O(6)G(7)I(8)A(9)
-      cruce H1 fila0,col5: MICROMETRO[5]='M' = METROLOGIA[0]='M' ✓
-      cruce H2 fila4,col5: FLEXOMETRO[4]='O' = METROLOGIA[4]='O' ✓
-      cruce H3 fila6,col5: VACUOMETRO[4]='O' = METROLOGIA[6]='O' ✓
-
-  V2. CONTROL     fila=0, col=2  → C(0)O(1)N(2)T(3)R(4)O(5)L(6)
-      cruce H1 fila0,col2: MICROMETRO[2]='C' = CONTROL[0]='C' ✓
-
-  V3. ESPESOR     fila=0, col=6  → E(0)S(1)P(2)E(3)S(4)O(5)R(6)
-      cruce H1 fila0,col6: MICROMETRO[6]='E' = ESPESOR[0]='E' ✓
-========================================================= */
+  Coordenadas verificadas sin conflictos de letras (ver herramienta de verificación
+  en el historial de cambios). MICROMETRO y METROLOGIA comparten intencionalmente
+  su celda de inicio (ambas empiezan con "M"). FLEXOMETRO y ESPESOR no cruzan
+  ninguna otra palabra — se movieron para evitar cruces accidentales con letras
+  distintas en la misma celda, que hacían esas palabras imposibles de completar.
+*/
 
 const ROWS = 12;
 const COLS = 14;
@@ -70,7 +60,7 @@ const PLACEMENTS: Placement[] = [
     clue: "Instrumento adecuado para realizar mediciones superiores a 300 mm en planta.",
     direction: "down",
     row: 0,
-    col: 7,
+    col: 12,
   },
 
   {
@@ -106,7 +96,7 @@ const PLACEMENTS: Placement[] = [
     clue: "Dimensión de un material medida de una cara a otra. Se verifica con el micrómetro en los lites.",
     direction: "down",
     row: 5,
-    col: 6,
+    col: 13,
   },
 ];
 /* =========================================================
@@ -135,7 +125,13 @@ function buildCrossword() {
       if (!cellToPlacements[key]) cellToPlacements[key] = [];
       cellToPlacements[key].push(item.number);
     }
-    grid[item.row][item.col] = { ...grid[item.row][item.col], isBlock: false, number: item.number };
+    grid[item.row][item.col] = {
+      ...grid[item.row][item.col],
+      isBlock: false,
+      // Si dos palabras arrancan en la misma celda, la primera registrada conserva
+      // el número visible — evita que una palabra tape el número de otra.
+      number: grid[item.row][item.col].number ?? item.number,
+    };
     wordCoords[item.number] = coords;
   }
   return { grid, wordCoords, cellToPlacements };

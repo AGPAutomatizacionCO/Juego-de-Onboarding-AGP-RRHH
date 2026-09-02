@@ -404,8 +404,8 @@ export default function NivelCerebroProcesos() {
       const wordsFound = Object.keys(foundWords).filter(k => foundWords[k]).length;
       const scorePct   = Math.round((wordsFound / words.length) * 100);
       await AsyncStorage.multiSet([
-        [keyU(`isla${ISLA_KEY}_nivel3_recordemos_done`),  "true"],
-        [keyU(`isla${ISLA_KEY}_nivel3_recordemos_score`), String(scorePct)],
+        [keyU(`isla${ISLA_KEY}_nivel${NIVEL_KEY}_recordemos_done`),  "true"],
+        [keyU(`isla${ISLA_KEY}_nivel${NIVEL_KEY}_recordemos_score`), String(scorePct)],
         [keyU(`isla${ISLA_KEY}_nivel4_social_unlocked`),  "true"],
       ]);
       await fetch(`${API_URL}${COMPLETE_ENDPOINT}`, {

@@ -780,7 +780,8 @@ exports.getResultadosDetalle = async (req, res) => {
           LIVES_LEFT,
           APROBADO,
           INTENTO,
-          FECHA
+          FECHA,
+          REINTENTO_HABILITADO
         FROM dbo.Onboarding_Resultados_Nivel
         WHERE USUARIO_KEY = @usuarioKey
           AND NIVELES_KEY = @nivelKey
@@ -807,6 +808,8 @@ exports.getResultadosDetalle = async (req, res) => {
               ? Number(rowRN.INTENTO)
               : null,
           fecha: rowRN.FECHA ? String(rowRN.FECHA) : null,
+          reintentoHabilitado:
+            rowRN.REINTENTO_HABILITADO === true || rowRN.REINTENTO_HABILITADO === 1,
         }
       : null;
 
@@ -816,6 +819,57 @@ exports.getResultadosDetalle = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error obteniendo detalle de resultados",
+    });
+  }
+};
+
+// HABILITAR/DESHABILITAR que un usuario vuelva a presentar un nivel ya completado.
+// El jugador consume este permiso solo al pulsar "Comenzar" (ver consumirReintento
+// en evaluacionFinal.controller.js), así que togglear esto no afecta a nadie que
+// ya esté presentando la evaluación.
+exports.setReintentoHabilitado = async (req, res) => {
+  try {
+    const usuarioKey = toInt(req.body.usuarioKey);
+    const nivelKey = toInt(req.body.nivelKey);
+    const habilitar = Boolean(req.body.habilitar);
+
+    if (!usuarioKey || !nivelKey) {
+      return res.status(400).json({
+        success: false,
+        message: "usuarioKey y nivelKey son requeridos",
+      });
+    }
+
+    const pool = await getPool();
+    if (!pool) {
+      return res.status(500).json({ success: false, message: "Sin conexión a la base de datos" });
+    }
+
+    const result = await pool
+      .request()
+      .input("usuarioKey", sql.Int, usuarioKey)
+      .input("nivelKey", sql.Int, nivelKey)
+      .input("habilitar", sql.Bit, habilitar ? 1 : 0)
+      .query(`
+        UPDATE dbo.Onboarding_Resultados_Nivel
+        SET REINTENTO_HABILITADO = @habilitar
+        WHERE USUARIO_KEY = @usuarioKey
+          AND NIVELES_KEY = @nivelKey
+      `);
+
+    if (!result.rowsAffected?.[0]) {
+      return res.status(404).json({
+        success: false,
+        message: "Este usuario no tiene un resultado guardado para ese nivel todavía",
+      });
+    }
+
+    return res.json({ success: true, data: { usuarioKey, nivelKey, habilitar } });
+  } catch (e) {
+    console.error("setReintentoHabilitado", e);
+    return res.status(500).json({
+      success: false,
+      message: "Error actualizando el permiso de reintento",
     });
   }
 };

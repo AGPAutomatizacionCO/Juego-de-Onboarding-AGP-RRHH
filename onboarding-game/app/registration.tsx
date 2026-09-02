@@ -43,7 +43,7 @@ export default function RegistrationScreen() {
   const fadeAnim = useState(new Animated.Value(0))[0];
 
   useEffect(() => {
-    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE).catch(() => {});
   }, []);
 
   const showCustomAlert = (message: string, color = "#4C92E4") => {

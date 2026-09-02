@@ -22,7 +22,7 @@ const RUTA_VOLVER = "/Procesos";
 const API_URL = API_BASE_URL;
 const ISLA_KEY = 3;
 const NIVEL_KEY_API = 14;
-const NIVEL_KEY_PROG = 4;
+const NIVEL_KEY_PROG = NIVEL_KEY_API;
 const MAX_LIVES = 3;
 
 /* =========================================================

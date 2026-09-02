@@ -296,11 +296,7 @@ export default function MapaScreen() {
                 <TouchableOpacity
                   style={styles.podioBtn}
                   onPress={() => {
-                    const nivelKeys: Record<number, number> = {
-                      1: 5, 2: 10, 3: 15, 4: 20, 5: 25, 6: 30, 7: 35, 8: 40, 9: 45,
-                    };
-                    const nivelKey = nivelKeys[isla.id] ?? 5;
-                    router.push(`/podio?nivelKey=${nivelKey}&islaKey=${isla.id}` as any);
+                    router.push(`/podio?islaKey=${isla.id}` as any);
                   }}
                 >
                   <Text style={styles.podioBtnText}>Ver Podio</Text>

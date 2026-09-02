@@ -1,10 +1,10 @@
 {
   "expo": {
     "name": "OnboardingGame",
-    "slug": "onboarding-game",
+    "slug": "onboardinggame",
     "version": "1.0.1",
     "orientation": "default",
-    "icon": "./assets/fondo.png",
+    "icon": "./assets/icon-transicion-online.png",
     "scheme": "onboarding-game",
     "splash": {
       "image": "./assets/fondo.png",
@@ -20,7 +20,7 @@
     "android": {
       "package": "com.onboardinggame.juegoapp",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/fondo.png",
+        "foregroundImage": "./assets/icon-transicion-online.png",
         "backgroundColor": "#FFFFFF"
       }
     },
@@ -28,16 +28,22 @@
       "favicon": "./assets/fondo.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-font",
+      "expo-web-browser"
     ],
-    "updates": {
-      "enabled": false
+    "runtimeVersion": {
+      "policy": "appVersion"
     },
-    "owner": "onboardinggame",
+    "updates": {
+      "url": "https://u.expo.dev/901681e6-9b2d-460f-9e96-5f080daae6a0"
+    },
+    "owner": "agpautomatizacionco",
     "extra": {
       "eas": {
-        "projectId": "bbe87f7c-0753-4d3c-a010-3f6dc642525c"
-      }
+        "projectId": "901681e6-9b2d-460f-9e96-5f080daae6a0"
+      },
+      "router": {}
     }
   }
 }

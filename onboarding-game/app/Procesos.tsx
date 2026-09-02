@@ -229,13 +229,12 @@ export default function ProcesosDeProduccion() {
       setSocialDoneLocal(sDone === "true");
       setSocialScoreLocal(sScore ? Number(sScore) : null);
 
-      const eDone  = await AsyncStorage.getItem(`u:${usuarioKey}:isla4_nivel20_evaluacion_done`);
-      const eScore = await AsyncStorage.getItem(`u:${usuarioKey}:isla4_nivel20_evaluacion_score`);
+      const eDone  = await AsyncStorage.getItem(`u:${usuarioKey}:isla${ISLA_KEY}_nivel${NIVEL_EVALUACION_KEY}_evaluacion_done`);
+      const eScore = await AsyncStorage.getItem(`u:${usuarioKey}:isla${ISLA_KEY}_nivel${NIVEL_EVALUACION_KEY}_evaluacion_score`);
 
-      // ✅ FIX: keys corregidas para coincidir con evaluacionFinal3 (ISLA_KEY=4, NIVEL_KEY=20)
       console.log("🎯 Evaluacion keys:", {
-        key_done:  `u:${usuarioKey}:isla4_nivel20_evaluacion_done`,
-        key_score: `u:${usuarioKey}:isla4_nivel20_evaluacion_score`,
+        key_done:  `u:${usuarioKey}:isla${ISLA_KEY}_nivel${NIVEL_EVALUACION_KEY}_evaluacion_done`,
+        key_score: `u:${usuarioKey}:isla${ISLA_KEY}_nivel${NIVEL_EVALUACION_KEY}_evaluacion_score`,
         eDone,
         eScore,
       });

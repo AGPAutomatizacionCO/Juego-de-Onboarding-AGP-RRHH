@@ -55,7 +55,8 @@ exports.getCasosSocial = async (req, res) => {
 
 exports.completar = async (req, res) => {
   try {
-    const { usuarioKey, nivelKey, puntaje, aprobado, mismatches, livesLeft } = req.body;
+    const { usuarioKey, puntaje, aprobado, mismatches, livesLeft } = req.body;
+    const nivelKey = req.params.nivelKey;
 
     if (usuarioKey == null || nivelKey == null) {
       return res.status(400).json({

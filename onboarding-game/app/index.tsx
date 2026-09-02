@@ -10,10 +10,10 @@ export default function StartScreen() {
   useEffect(() => {
     ScreenOrientation.lockAsync(
       ScreenOrientation.OrientationLock.LANDSCAPE
-    );
+    ).catch(() => {});
 
     return () => {
-      ScreenOrientation.unlockAsync();
+      ScreenOrientation.unlockAsync().catch(() => {});
     };
   }, []);
 

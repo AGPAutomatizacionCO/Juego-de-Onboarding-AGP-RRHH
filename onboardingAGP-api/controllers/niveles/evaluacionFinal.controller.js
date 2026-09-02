@@ -174,7 +174,7 @@ exports.getResultado = async function getResultado(req, res) {
       .input("usuarioKey", sql.Int, Number(usuarioKey))
       .input("nivelKey", sql.Int, Number(nivelKey))
       .query(`
-        SELECT TOP 1 PUNTAJE, APROBADO, FECHA
+        SELECT TOP 1 PUNTAJE, APROBADO, FECHA, REINTENTO_HABILITADO
         FROM ${TABLA_RESULTADOS}
         WHERE USUARIO_KEY = @usuarioKey
           AND NIVELES_KEY = @nivelKey
@@ -189,6 +189,7 @@ exports.getResultado = async function getResultado(req, res) {
         puntaje: row.PUNTAJE,
         aprobado: row.APROBADO === 1,
         fecha: row.FECHA,
+        reintentoHabilitado: row.REINTENTO_HABILITADO === true || row.REINTENTO_HABILITADO === 1,
       } : null,
     });
   } catch (e) {
@@ -197,6 +198,38 @@ exports.getResultado = async function getResultado(req, res) {
       success: false,
       message: "Error consultando resultado",
     });
+  }
+}
+
+// ✅ El jugador consume su propio permiso de reintento justo al pulsar "Comenzar"
+// (nunca antes) — así el admin puede togglear el permiso libremente sin riesgo de
+// interrumpir una evaluación que ya está en curso.
+exports.consumirReintento = async function consumirReintento(req, res) {
+  try {
+    const { usuarioKey, nivelKey } = req.body;
+    const uk = toInt(usuarioKey);
+    const nk = toInt(nivelKey);
+
+    if (!uk || !nk) {
+      return res.status(400).json({ success: false, message: "usuarioKey y nivelKey son requeridos" });
+    }
+
+    const pool = await getPool();
+    await pool
+      .request()
+      .input("usuarioKey", sql.Int, uk)
+      .input("nivelKey", sql.Int, nk)
+      .query(`
+        UPDATE ${TABLA_RESULTADOS}
+        SET REINTENTO_HABILITADO = 0
+        WHERE USUARIO_KEY = @usuarioKey
+          AND NIVELES_KEY = @nivelKey
+      `);
+
+    return res.json({ success: true });
+  } catch (e) {
+    console.error("consumirReintento:", e);
+    return res.status(500).json({ success: false, message: "Error consumiendo reintento" });
   }
 }
 
@@ -218,6 +251,31 @@ exports.getPodio = async function getPodio(req, res) {
   } catch (e) {
     console.error("getPodio:", e);
     return res.status(500).json({ success: false, message: "Error consultando podio" });
+  }
+}
+
+// ✅ Podio calculado con el desempeño completo de la isla (los N niveles que la componen),
+// no solo la evaluación final. Solo entran al ranking quienes completaron todos los niveles;
+// el resto queda como "aún no responde", igual que hoy. Desempate: menor tiempo total (FECHA
+// del primer al último nivel completado de la isla).
+exports.getPodioIsla = async function getPodioIsla(req, res) {
+  try {
+    const { islaKey, numeroOnboarding } = req.query;
+    if (!islaKey) {
+      return res.status(400).json({ success: false, message: "Falta islaKey" });
+    }
+    if (!numeroOnboarding) {
+      return res.status(400).json({ success: false, message: "Falta numeroOnboarding" });
+    }
+    const { getPodioIsla: getPodioIslaModel } = require("../../models/niveles/evaluacionFinal.model");
+    const rows = await getPodioIslaModel({
+      islaKey: Number(islaKey),
+      numeroOnboarding: Number(numeroOnboarding),
+    });
+    return res.json({ success: true, data: rows });
+  } catch (e) {
+    console.error("getPodioIsla:", e);
+    return res.status(500).json({ success: false, message: "Error consultando podio de isla" });
   }
 }
 
@@ -275,4 +333,6 @@ module.exports = {
   getResultado: exports.getResultado,
   getResultadoIsla: exports.getResultadoIsla,
   getPodio: exports.getPodio,
+  getPodioIsla: exports.getPodioIsla,
+  consumirReintento: exports.consumirReintento,
 };

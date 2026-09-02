@@ -4,6 +4,7 @@ import { Stack } from "expo-router";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import * as ScreenOrientation from "expo-screen-orientation";
+import * as Updates from "expo-updates";
 import { useEffect, useState } from "react";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { Dimensions } from "react-native";
@@ -26,16 +27,21 @@ export default function RootLayout() {
   useEffect(() => {
     async function lockOrientation() {
       if (!isPhone) {
-        await ScreenOrientation.lockAsync(
-          ScreenOrientation.OrientationLock.LANDSCAPE
-        );
+        try {
+          await ScreenOrientation.lockAsync(
+            ScreenOrientation.OrientationLock.LANDSCAPE
+          );
+        } catch (error) {
+          // No soportado (ej. navegador de escritorio) — seguimos sin forzar orientación.
+          console.log("No se pudo bloquear la orientación:", error);
+        }
       }
       setOrientationLocked(true);
     }
     lockOrientation();
 
     return () => {
-      ScreenOrientation.unlockAsync();
+      ScreenOrientation.unlockAsync().catch(() => {});
     };
   }, []);
 
@@ -44,6 +50,22 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);
+
+  useEffect(() => {
+    async function checkForUpdate() {
+      if (__DEV__) return;
+      try {
+        const result = await Updates.checkForUpdateAsync();
+        if (result.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        }
+      } catch (error) {
+        console.log("Update check failed:", error);
+      }
+    }
+    checkForUpdate();
+  }, []);
 
   if (!fontsLoaded || !orientationLocked) {
     return (

@@ -24,7 +24,6 @@ type Player = {
 export default function PodioScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const nivelKey = Number(params.nivelKey);
   const islaKey = Number(params.islaKey);
 
   const [players, setPlayers] = useState<Player[]>([]);
@@ -32,14 +31,14 @@ export default function PodioScreen() {
 
   useEffect(() => {
     loadPodio();
-  }, [nivelKey]);
+  }, [islaKey]);
 
   const loadPodio = async () => {
     try {
       setLoading(true);
 
-      if (!nivelKey) {
-        Alert.alert("Error", "No se especificó el nivel");
+      if (!islaKey) {
+        Alert.alert("Error", "No se especificó la isla");
         router.back();
         return;
       }
@@ -65,10 +64,9 @@ export default function PodioScreen() {
         return;
       }
 
-      // 3. Cargar podio con la nueva ruta /podio/:numeroOnboarding?nivelKey=...
+      // 3. Cargar podio calculado sobre el desempeño completo de la isla
       const podioRes = await fetch(
-        `${API_BASE}/niveles/evaluacionFinal/podio?nivelKey=${nivelKey}&numeroOnboarding=${numeroOnboarding}`
-
+        `${API_BASE}/niveles/evaluacionFinal/podio-isla?islaKey=${islaKey}&numeroOnboarding=${numeroOnboarding}`
       );
       const podioData = await podioRes.json();
 

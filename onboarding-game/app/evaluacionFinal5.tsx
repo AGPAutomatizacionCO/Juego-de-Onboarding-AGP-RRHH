@@ -161,6 +161,7 @@ export default function NivelEvaluacionFinalCalidad() {
   const [usuarioKey,       setUsuarioKey]       = useState<number | null>(null);
   const [numeroOnboarding, setNumeroOnboarding] = useState<number | null>(null);
   const [savedPct,         setSavedPct]         = useState<number>(0);
+  const [reintentoPendiente, setReintentoPendiente] = useState(false);
   const [showIntro,        setShowIntro]        = useState(true);
   const [showGame,         setShowGame]         = useState(false);
   const [qIndex,           setQIndex]           = useState(0);
@@ -208,6 +209,11 @@ export default function NivelEvaluacionFinalCalidad() {
           const r = await apiJson(`${API_BASE}/evaluacionFinal/resultado/${finalUk}/${NIVEL_KEY}`);
           const pct = Number(r?.data?.puntaje ?? 0);
           if (pct > 0) setSavedPct(Number.isFinite(pct) ? pct : 0);
+          if (r?.data?.reintentoHabilitado) {
+            setReintentoPendiente(true);
+            setShowResult(false);
+            setShowIntro(true);
+          }
         } catch { setSavedPct(0); }
       }
     })();
@@ -224,6 +230,17 @@ export default function NivelEvaluacionFinalCalidad() {
 
   /* ── Iniciar juego ── */
   const startGame = () => {
+    if (reintentoPendiente && usuarioKey) {
+      AsyncStorage.multiRemove([
+        `u:${usuarioKey}:isla${ISLA_KEY}_nivel${NIVEL_KEY}_evaluacion_done`,
+        `u:${usuarioKey}:isla${ISLA_KEY}_nivel${NIVEL_KEY}_evaluacion_score`,
+      ]);
+      apiJson(`${API_BASE}/evaluacionFinal/reintento/consumir`, {
+        method: "POST",
+        body: JSON.stringify({ usuarioKey, nivelKey: NIVEL_KEY }),
+      }).catch(() => {});
+      setReintentoPendiente(false);
+    }
     const shuffled = QUESTIONS_BASE.map((q) => shuffleQuestion(q));
     setQuestions(shuffled);
     setAnswersSingle({}); setAnswersMulti({}); setAnswersMatrix({});
@@ -342,7 +359,7 @@ export default function NivelEvaluacionFinalCalidad() {
     if (!nOn || nOn <= 0) { Alert.alert("Sin grupo", "No se encontró el número de onboarding."); return; }
     try {
       setPodioLoading(true);
-      const r = await apiJson(`${API_BASE}/evaluacionFinal/podio?nivelKey=${NIVEL_KEY}&numeroOnboarding=${nOn}`);
+      const r = await apiJson(`${API_BASE}/evaluacionFinal/podio-isla?islaKey=${ISLA_KEY}&numeroOnboarding=${nOn}`);
       setPlayers((r?.data || []).map((row: any, idx: number) => ({
         id:      String(row.usuarioKey ?? idx),
         nombre:  row.nombre ?? "Sin nombre",
@@ -419,7 +436,7 @@ export default function NivelEvaluacionFinalCalidad() {
               <View style={{ width: MATRIX_LABEL_W }} />
               {q.columns.map((col) => (
                 <View key={col.key} style={st.mxColHeader}>
-                  <Text style={st.mxHeaderText} numberOfLines={3}>{col.label}</Text>
+                  <Text style={st.mxHeaderText}>{col.label}</Text>
                 </View>
               ))}
             </View>
@@ -428,7 +445,7 @@ export default function NivelEvaluacionFinalCalidad() {
               return (
                 <View key={row.id} style={[st.mxRow, i % 2 === 0 && st.mxRowAlt]}>
                   <View style={[st.mxLabelCell, answered && st.mxLabelAnswered]}>
-                    <Text style={st.mxLabelText} numberOfLines={3}>{row.label}</Text>
+                    <Text style={st.mxLabelText}>{row.label}</Text>
                   </View>
                   {q.columns.map((col) => {
                     const sel = matAns[row.id] === col.key;

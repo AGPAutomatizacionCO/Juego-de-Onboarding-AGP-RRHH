@@ -782,6 +782,7 @@ export default function NivelRecordemosCrucigramaAGP() {
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                           usuarioKey,
+                          islaKey: ISLA_KEY,
                           puntaje: FIXED_SCORE,
                           aprobado: true,
                         }),

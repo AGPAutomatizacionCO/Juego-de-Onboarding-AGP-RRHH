@@ -546,6 +546,14 @@ export default function NivelVisualManipulacion() {
 
   const avanzarActual = fase === "modulo1" ? avanzarDesdeSub1 : avanzarDesdeSub2;
 
+  // Al perder todas las vidas de la sección se reinicia esa misma sección
+  // (no se avanza a la siguiente, que es lo que hacía avanzarActual).
+  const reintentarActual = () => {
+    setShowSinVidas(false);
+    if (fase === "modulo1") iniciarSub1(sub1Index);
+    else iniciarSub2(sub2Index);
+  };
+
   return (
     <ImageBackground source={fondo} style={st.bg} resizeMode="cover">
       <View style={st.overlayBg}>
@@ -820,10 +828,10 @@ export default function NivelVisualManipulacion() {
               <Text style={st.bigHeart}>💔</Text>
               <Text style={st.minusOneText}>Sin vidas en esta sección</Text>
               <Text style={st.modalDescSmall}>
-                Se gastaron las {VIDAS_POR_SUBMODULO} vidas de esta sección.{"\n"}Continuemos con la siguiente.
+                Se gastaron las {VIDAS_POR_SUBMODULO} vidas de esta sección.{"\n"}Vuelve a intentarla desde el inicio.
               </Text>
-              <TouchableOpacity style={[st.modalBtn, { backgroundColor: "#4C92E4", marginTop: scaleDP(10) }]} onPress={avanzarActual}>
-                <Text style={st.modalBtnTxt}>Continuar</Text>
+              <TouchableOpacity style={[st.modalBtn, { backgroundColor: "#4C92E4", marginTop: scaleDP(10) }]} onPress={reintentarActual}>
+                <Text style={st.modalBtnTxt}>Reintentar sección</Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -103,12 +103,14 @@ const SUB2: Hotspot[] = [
   { id:"h90", number:90, xRatio:0.485, yRatio:0.186, correct:{label:"Sun Roof Panorámico", siglas:"SRP"}, options:[] },
 ];
 const SUB3: Hotspot[] = [
-  { id:"h27", number:27, xRatio:0.411, yRatio:0.255, correct:{label:"Parabrisas Izquierdo", siglas:"PBI"}, options:[], labelLeft:true },
-  { id:"h26", number:26, xRatio:0.500, yRatio:0.318, correct:{label:"Parabrisas Derecho",   siglas:"PBD"}, options:[] },
+  { id:"h27", number:27, xRatio:0.411, yRatio:0.255, correct:{label:"Parabrisas Derecho",   siglas:"PBD"}, options:[], labelLeft:true },
+  { id:"h26", number:26, xRatio:0.500, yRatio:0.318, correct:{label:"Parabrisas Izquierdo", siglas:"PBI"}, options:[] },
 ];
 const SUB4: Hotspot[] = [
-  { id:"h13", number:13, xRatio:0.203, yRatio:0.230, correct:{label:"Posterior Izquierdo", siglas:"POI"}, options:[] },
-  { id:"h14", number:14, xRatio:0.324, yRatio:0.330, correct:{label:"Posterior Derecho",   siglas:"POD"}, options:[] },
+  // Vista "Posterior": lo que se ve a la izquierda en la foto es el lado
+  // derecho real del vehículo (efecto espejo al mirar desde atrás).
+  { id:"h13", number:13, xRatio:0.203, yRatio:0.230, correct:{label:"Posterior Derecho",   siglas:"POD"}, options:[] },
+  { id:"h14", number:14, xRatio:0.324, yRatio:0.330, correct:{label:"Posterior Izquierdo", siglas:"POI"}, options:[] },
 ];
 const SUB5: Hotspot[] = [
   { id:"h25", number:25, xRatio:0.536, yRatio:0.256, correct:{label:"Sunroof Secundario",         siglas:"SRB"}, options:[], labelLeft:true },
@@ -630,7 +632,7 @@ export default function NivelVisual4() {
                 style={[styles.hotspotBtn, {
                   left: px - 18,
                   top:  py - 18,
-                  backgroundColor: correct[hotspot.id]===true ? "#58AE73" : "#4E9FB0",
+                  backgroundColor: correct[hotspot.id]===true ? "rgba(88,174,115,0.55)" : "rgba(78,159,176,0.55)",
                 }]}
                 onPress={() => openHotspot(hotspot)} activeOpacity={0.8}
               >
