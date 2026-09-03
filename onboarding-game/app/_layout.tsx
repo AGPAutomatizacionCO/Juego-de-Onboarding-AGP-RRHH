@@ -52,12 +52,21 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   useEffect(() => {
+    // Deshabilitado temporalmente: en la tablet real (Bridgeless/New Architecture)
+    // esta llamada se quedaba esperando indefinidamente y congelaba el hilo de JS
+    // por completo (pantalla negra, sin error, sin crash). Pendiente investigar
+    // con calma antes de reactivar — por ahora priorizamos que la app funcione.
+    if (true) return;
+
     async function checkForUpdate() {
       if (__DEV__) return;
       try {
-        const result = await Updates.checkForUpdateAsync();
-        if (result.isAvailable) {
-          await Updates.fetchUpdateAsync();
+        const timeout = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Timeout revisando actualización")), 5000)
+        );
+        const result: any = await Promise.race([Updates.checkForUpdateAsync(), timeout]);
+        if (result?.isAvailable) {
+          await Promise.race([Updates.fetchUpdateAsync(), timeout]);
           await Updates.reloadAsync();
         }
       } catch (error) {
