@@ -242,3 +242,144 @@ se recompiló desde cero.
 ### Pendiente de registro
 
 Validación en tablet real (T-12) y distribución (T-13). Ver `specs/003-tasks.md`.
+
+---
+
+## 2026-09-02 — Actualización remota (EAS Update) y corrección de 13 de 17 errores reportados
+
+### Actualización remota
+
+Instalada la dependencia `expo-updates` (pendiente desde T-02) y configurada bajo una
+cuenta Expo propia de AGP (`agpautomatizacionco`), no la del proveedor. Declarado
+`runtimeVersion` con política `appVersion` y `updates.url` apuntando al proyecto de AGP.
+Esto permite publicar correcciones de JavaScript a las tablets ya instaladas sin generar
+un nuevo APK, mediante `eas update`.
+
+### Corrección de 13 de los 17 errores del documento de requerimientos
+
+Detalle completo en el mensaje del commit `5016950`. Resumen:
+
+- Podio por isla calculado como promedio de los 5 niveles, no solo la evaluación final,
+  con desempate por tiempo.
+- Nuevo permiso de reintento de evaluación: el administrador lo habilita por usuario y
+  por nivel; se consume solo al iniciar el intento.
+- Corregido el guardado del nivel Social de HSE (esperaba `nivelKey` en el cuerpo de la
+  petición en vez de en la URL) y una atribución de isla incorrecta en Recordemos.
+- Corregidas claves de progreso desincronizadas en Procesos que bloqueaban el avance a
+  Recordemos, y una lectura de estado de evaluación que apuntaba a la isla equivocada.
+- Conceptos Generales: el marcador numérico ya no tapa el vidrio en pantalla; etiquetas
+  Izquierdo/Derecho invertidas corregidas en Parabrisas y Posterior; texto de tabla que se
+  cortaba en la evaluación final, corregido en todas las islas.
+- Manipulación de Vidrio: perder las vidas reinicia la sección en vez de saltar a la
+  siguiente.
+- Metrología: crucigrama con el número de palabra tapado y dos cruces de letras
+  contradictorios que impedían completarlo.
+- Lectura OF: la pantalla del nivel visual estaba vacía y crasheaba la app; reconstruida
+  con el mismo motor que HSE.
+- Retirada la pantalla huérfana `app/App.js` (paquete descontinuado, accesible por ruta
+  pese a no usarse).
+
+Dos de los 17 quedaron fuera de alcance de código (resolución de fotografías, limitada
+por la cámara del dispositivo) o duplicados de otro ítem ya cubierto. Dos más —reporte de
+administrador filtrable por usuario, y auditoría de consistencia de contadores— quedaron
+pausados a solicitud expresa para una etapa posterior.
+
+### Release v1.0.2 y hallazgo de configuración
+
+Publicado `v1.0.2` en GitHub Releases. Al probar en tablet, la app resultó inutilizable:
+el build había quedado compilado apuntando a una IP local de pruebas
+(`EXPO_PUBLIC_API_URL`) en vez de la URL de Azure, un valor que no se revirtió antes de
+compilar. Corregido y publicado como `v1.0.3`.
+
+### Release v1.0.3 y pantalla negra persistente
+
+`v1.0.3` corrigió además dos causas de pantalla negra al abrir detectadas en la misma
+prueba: faltaba el plugin `expo-splash-screen` (el formato antiguo de `splash` en
+`app.json` ya no aplica en el SDK actual) y el logo del ícono de transición ocupaba 78%
+del lienzo, fuera de la zona segura del ícono adaptativo de Android (reducido a 56%).
+
+La app seguía quedando en pantalla negra después de estas correcciones. Diagnóstico
+retomado el 2026-09-03.
+
+---
+
+## 2026-09-03 — Diagnóstico y corrección de la pantalla negra persistente
+
+### Método
+
+Ante la sospecha fundada de que el problema solo era observable en hardware real —y tras
+dos ciclos de compilación a ciegas sin resultado—, se depuró directamente sobre una
+tablet Samsung Galaxy Tab A9+ física mediante ADB (depuración inalámbrica, sin acceso
+USB disponible por falta de driver del fabricante), leyendo `logcat` en cada intento en
+lugar de seguir conjeturando desde el código.
+
+### Causa raíz encontrada
+
+`app/index.tsx` (primera pantalla) reproducía un video de introducción
+(`INTROYES.mp4`) con `expo-av`, y solo navegaba a `/registration` cuando el video
+terminaba (`onPlaybackStatusUpdate`). El log de la tablet mostró:
+
+```text
+ExoPlayerImplInternal: Playback error ... FileNotFoundException:
+/android_res/raw/assets_introyes.mp4: open failed: ENOENT
+```
+
+El archivo existe, está referenciado correctamente, y no hay ninguna exclusión en
+`.gitignore`, `.easignore` (no existe) ni en `assetExts` de Metro que explique por qué no
+se empaquetó en el binario nativo — la causa exacta de ese fallo de empaquetado quedó sin
+determinar. Sin manejo de error ni límite de tiempo, la ausencia del video dejaba la app
+varada en negro para siempre, sin ninguna salida posible.
+
+### Primer intento (commit `fe0d453`) — insuficiente
+
+Se agregó `onError` al componente `<Video>` y un `setTimeout` de seguridad de 8 segundos,
+ambos invocando la misma función de avance. Compilado como build de prueba (no publicado
+como release). En pruebas posteriores sobre el dispositivo real, el hilo de JavaScript de
+esa pantalla se observó sin actividad después de `Running "main"` de forma intermitente
+—ni el evento de error del video ni el `setTimeout` independiente llegaban a ejecutarse
+en algunas corridas—, un comportamiento no atribuible con certeza al video en sí. Se
+decidió no seguir agregando capas defensivas sobre un componente cuyo comportamiento en
+este hardware no podía explicarse por completo.
+
+### Corrección definitiva (commit `47d94df`)
+
+Eliminada la dependencia del video por completo. `index.tsx` reescrito para mostrar una
+imagen estática (`assets/introfinal.png`, ya existente en el proyecto como último cuadro
+del video) durante 3 segundos y navegar. Cero referencias a `expo-av` en el proyecto tras
+el cambio.
+
+### Publicación por actualización remota, no por nuevo APK
+
+Al ser un cambio exclusivo de JavaScript, se publicó mediante `eas update --branch
+production` en lugar de compilar un nuevo binario — evitando la cola de compilación de
+EAS (que en este proyecto llegó a superar 4 horas en el plan gratuito). Verificado en la
+tablet real: una instalación completamente nueva del APK `v1.0.3` público (el mismo que
+está en GitHub Releases, sin ninguna modificación) descarga y aplica la actualización
+remota en su primer arranque con conexión a internet, sin quedar nunca en pantalla negra.
+**No se requiere ni se publicó un nuevo release del APK** — `v1.0.3` sigue siendo la
+versión vigente a distribuir.
+
+### Verificación adicional ejecutada sobre la tablet real
+
+Con la actualización ya aplicada, se ejecutó una batería de pruebas funcionales contra
+producción (Azure + `AGP_RRHH` real): registro de usuario, inicio de sesión por cédula
+con recuperación de progreso, bloqueo secuencial de niveles, carga del nivel Visual 1
+(memoria) y navegación a la pantalla de login de administrador. Cero excepciones fatales
+ni ANR en el `logcat` completo de la sesión.
+
+Dos hallazgos menores, ninguno bloqueante, quedan pendientes de una sesión posterior:
+
+- Si el registro falla en el backend (probado con una cédula que desborda la columna
+  `int`, causando un `500`), el botón vuelve a su estado inicial sin mostrar ningún
+  mensaje de error al usuario.
+- `app/nivelvisual1.tsx` llama a un endpoint (`/niveles/visual/:nivelKey/estado`) que no
+  existe en el backend — falta el prefijo `/api` y la ruta nunca se implementó del lado
+  del servidor. Falla en silencio y el código ya contempla ese caso: cae de inmediato al
+  progreso guardado localmente (`AsyncStorage`), que sí funciona. Código aislado a ese
+  archivo, sin efecto observable en el uso normal de una tablet.
+
+### Dato registrado en producción durante la prueba
+
+Queda en la base de datos real un registro de prueba identificable
+(`PRUEBA CLAUDE QA`, cédula `1122334455`), a la espera de que AGP decida si lo conserva
+como caso de prueba o lo elimina.
