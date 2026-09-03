@@ -1,12 +1,14 @@
-import { Video, ResizeMode } from "expo-av";
 import { useRouter } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
 import React, { useEffect, useRef } from "react";
-import { StyleSheet, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 
-// Si el video falla o tarda demasiado (archivo faltante, error de códec,
-// etc.), no debe dejar a la app varada en pantalla negra sin salida.
-const FALLBACK_TIMEOUT_MS = 8000;
+// El video de intro (expo-av/ExoPlayer) se quitó: en la tablet real el
+// hilo de JS quedaba congelado indefinidamente al montar ese componente
+// (sin error, sin crash), y ni el onError ni un timeout en JS lograban
+// recuperar la app. Se reemplazó por una imagen estática para eliminar
+// esa dependencia por completo.
+const SPLASH_DURATION_MS = 3000;
 
 export default function StartScreen() {
   const router = useRouter();
@@ -23,33 +25,20 @@ export default function StartScreen() {
       ScreenOrientation.OrientationLock.LANDSCAPE
     ).catch(() => {});
 
-    const fallback = setTimeout(goNext, FALLBACK_TIMEOUT_MS);
+    const timer = setTimeout(goNext, SPLASH_DURATION_MS);
 
     return () => {
-      clearTimeout(fallback);
+      clearTimeout(timer);
       ScreenOrientation.unlockAsync().catch(() => {});
     };
   }, []);
 
-  const handlePlaybackStatusUpdate = (status: any) => {
-    if (status?.didJustFinish) {
-      goNext();
-    }
-  };
-
   return (
     <View style={styles.container}>
-      <Video
-        source={require("../assets/INTROYES.mp4")}
+      <Image
+        source={require("../assets/introfinal.png")}
         style={styles.background}
-        resizeMode={ResizeMode.CONTAIN}
-        shouldPlay
-        isLooping={false}
-        onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
-        onError={(error) => {
-          console.log("Error reproduciendo video de intro:", error);
-          goNext();
-        }}
+        resizeMode="contain"
       />
     </View>
   );
