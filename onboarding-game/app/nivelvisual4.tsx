@@ -107,10 +107,8 @@ const SUB3: Hotspot[] = [
   { id:"h26", number:26, xRatio:0.500, yRatio:0.318, correct:{label:"Parabrisas Izquierdo", siglas:"PBI"}, options:[] },
 ];
 const SUB4: Hotspot[] = [
-  // Vista "Posterior": lo que se ve a la izquierda en la foto es el lado
-  // derecho real del vehículo (efecto espejo al mirar desde atrás).
-  { id:"h13", number:13, xRatio:0.203, yRatio:0.230, correct:{label:"Posterior Derecho",   siglas:"POD"}, options:[] },
-  { id:"h14", number:14, xRatio:0.324, yRatio:0.330, correct:{label:"Posterior Izquierdo", siglas:"POI"}, options:[] },
+  { id:"h13", number:13, xRatio:0.203, yRatio:0.230, correct:{label:"Posterior Izquierdo", siglas:"POI"}, options:[] },
+  { id:"h14", number:14, xRatio:0.324, yRatio:0.330, correct:{label:"Posterior Derecho",   siglas:"POD"}, options:[] },
 ];
 const SUB5: Hotspot[] = [
   { id:"h25", number:25, xRatio:0.536, yRatio:0.256, correct:{label:"Sunroof Secundario",         siglas:"SRB"}, options:[], labelLeft:true },
