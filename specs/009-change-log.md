@@ -383,3 +383,59 @@ Dos hallazgos menores, ninguno bloqueante, quedan pendientes de una sesión post
 Queda en la base de datos real un registro de prueba identificable
 (`PRUEBA CLAUDE QA`, cédula `1122334455`), a la espera de que AGP decida si lo conserva
 como caso de prueba o lo elimina.
+
+### Corrección: etiqueta Izquierdo/Derecho invertida en la zona Posterior
+
+El fix del 2026-09-02 (commit `5016950`) invirtió las etiquetas Izquierdo/Derecho tanto en
+Parabrisas como en Posterior, asumiendo el mismo efecto espejo en ambas vistas de
+`nivelvisual4.tsx`. AGP confirmó que la vista Posterior ya estaba correcta antes de ese
+cambio — solo Parabrisas necesitaba la inversión. Revertido el mapeo de Posterior a su
+estado original (commit `3ddc371`) y publicado por `eas update`.
+
+---
+
+## 2026-09-10 — Podio por isla: el desempate por tiempo no era verificable
+
+### Reporte
+
+AGP solicitó confirmar si el mecanismo de podio (orden por puntaje, desempate por tiempo)
+está correctamente implementado para las 9 islas, señalando que **actualmente no es
+posible revisarlo**.
+
+### Diagnóstico
+
+El backend (`getPodioIsla`, en `evaluacionFinal.model.js`) ya calculaba y ordenaba
+correctamente por puntaje descendente con desempate por tiempo ascendente
+(`DATEDIFF(SECOND, inicio, fin)`), mediante una sola consulta genérica parametrizada por
+`islaKey` — no hay lógica distinta por isla. Se confirmó contra el catálogo real de
+niveles en Azure (`GET /api/islas/:islaKey/niveles`) que las 9 islas tienen
+`NIVELES_KEY`/`ISLAS_KEY` bien formados: 8 islas con 5 niveles cada una (Visual, Lectura,
+Recordemos, Social, Evaluación) y la isla 9 (Evaluación Final) con 1 nivel único, como
+corresponde a su naturaleza de cierre. El backend era correcto para las 9.
+
+El problema real estaba en el frontend (`app/podio.tsx`):
+
+- La respuesta del backend incluye `tiempoSegundos`, pero el mapeo al estado del
+  componente lo descartaba por completo — el tiempo nunca se guardaba ni se mostraba en
+  ninguna parte de la pantalla. Sin verlo, no había forma de confirmar que el desempate
+  ocurría.
+- El componente reordenaba la lista en el cliente comparando **solo** por puntaje, sin su
+  propio criterio de desempate — dependía implícitamente de que el orden ya correcto que
+  entrega el backend sobreviviera un `Array.sort` en JavaScript (estable en motores
+  modernos, pero no declarado ni garantizado por el código).
+- El subtítulo de la pantalla solo reconocía las islas 1, 2 y 3 por nombre
+  (Introducción, HSE, Procesos); las 6 restantes mostraban el genérico "Isla N".
+- El título decía "Podio - Evaluación Final", desactualizado desde que el fix del
+  2026-09-02 cambió el cálculo al promedio de los 5 niveles de la isla.
+
+### Corrección aplicada (commit `9066274`)
+
+- Se captura `tiempoSegundos` y se muestra (formato `mm:ss`, u `h:mm:ss` si supera una
+  hora) junto al puntaje, tanto en el podio de medallas como en la lista completa.
+- El reordenamiento del cliente ahora replica explícitamente el mismo criterio del
+  backend (puntaje descendente, tiempo ascendente como desempate), sin depender de la
+  estabilidad implícita del ordenamiento recibido.
+- Nombres de las 9 islas declarados explícitamente para el subtítulo.
+- Título corregido a "Podio" a secas, sin la referencia obsoleta a evaluación final.
+
+Publicado por `eas update` (branch `production`) — no requirió compilar un nuevo APK.
