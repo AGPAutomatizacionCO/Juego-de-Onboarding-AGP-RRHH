@@ -953,6 +953,9 @@ export default function AdminPanel() {
       return { ...prev, lecturaItems: items };
     });
   };
+  const addVisualPair = () => setEditorData((prev) => ({ ...prev, visualPairs: [...(prev.visualPairs || []), { imagen: "", imagenRespuesta: "" }] }));
+  const removeVisualPair = (idx: number) => setEditorData((prev) => { const pairs = [...(prev.visualPairs || [])]; pairs.splice(idx, 1); return { ...prev, visualPairs: pairs }; });
+
   const addLecturaItem = () => setEditorData((prev) => ({ ...prev, lecturaItems: [...(prev.lecturaItems || []), { antes: "", despues: "", respuestas: Array(10).fill(""), correcta: "" }] }));
   const removeLecturaItem = (idx: number) => setEditorData((prev) => { const items = [...(prev.lecturaItems || [])]; items.splice(idx, 1); return { ...prev, lecturaItems: items }; });
 
@@ -1254,24 +1257,34 @@ export default function AdminPanel() {
           {/* ===== VISUAL ===== */}
           {editorKind === "visual" && (
             <>
-              <Text style={styles.editLabel}>PARES DE IMAGENES (Imagen + Respuesta)</Text>
+              <View style={styles.editorSectionHeader}>
+                <Text style={styles.editLabel}>PARES DE IMAGENES (Imagen + Respuesta)</Text>
+                <TouchableOpacity style={styles.addBtn} onPress={addVisualPair}>
+                  <Text style={styles.addBtnText}>+ Anadir</Text>
+                </TouchableOpacity>
+              </View>
               {(editorData.visualPairs || []).length === 0 ? (
                 <Text style={styles.loadingText}>No hay pares cargados en la BD.</Text>
               ) : (
                 (editorData.visualPairs || []).map((pair, idx) => (
-                  <View key={String(pair.id ?? idx)} style={styles.visualRow}>
-                    <View style={styles.visualCol}>
-                      <Text style={styles.visualLabel}>Imagen</Text>
-                      <TouchableOpacity style={styles.visualImgBox} onPress={() => reemplazarImagenVisual(idx, "imagen")}>
-                        {pair.imagen ? <Image source={{ uri: pair.imagen }} style={styles.visualPreview} resizeMode="cover" /> : <Text style={styles.visualPlaceholder}>Toca para agregar</Text>}
-                      </TouchableOpacity>
+                  <View key={String(pair.id ?? idx)} style={[styles.visualRow, { flexDirection: "column" }]}>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                      <View style={styles.visualCol}>
+                        <Text style={styles.visualLabel}>Imagen</Text>
+                        <TouchableOpacity style={styles.visualImgBox} onPress={() => reemplazarImagenVisual(idx, "imagen")}>
+                          {pair.imagen ? <Image source={{ uri: pair.imagen }} style={styles.visualPreview} resizeMode="cover" /> : <Text style={styles.visualPlaceholder}>Toca para agregar</Text>}
+                        </TouchableOpacity>
+                      </View>
+                      <View style={styles.visualCol}>
+                        <Text style={styles.visualLabel}>Respuesta</Text>
+                        <TouchableOpacity style={styles.visualImgBox} onPress={() => reemplazarImagenVisual(idx, "imagenRespuesta")}>
+                          {pair.imagenRespuesta ? <Image source={{ uri: pair.imagenRespuesta }} style={styles.visualPreview} resizeMode="cover" /> : <Text style={styles.visualPlaceholder}>Toca para agregar</Text>}
+                        </TouchableOpacity>
+                      </View>
                     </View>
-                    <View style={styles.visualCol}>
-                      <Text style={styles.visualLabel}>Respuesta</Text>
-                      <TouchableOpacity style={styles.visualImgBox} onPress={() => reemplazarImagenVisual(idx, "imagenRespuesta")}>
-                        {pair.imagenRespuesta ? <Image source={{ uri: pair.imagenRespuesta }} style={styles.visualPreview} resizeMode="cover" /> : <Text style={styles.visualPlaceholder}>Toca para agregar</Text>}
-                      </TouchableOpacity>
-                    </View>
+                    <TouchableOpacity onPress={() => removeVisualPair(idx)} style={{ alignSelf: "flex-end", marginTop: sp(8) }}>
+                      <Text style={styles.linkDanger}>Eliminar</Text>
+                    </TouchableOpacity>
                   </View>
                 ))
               )}

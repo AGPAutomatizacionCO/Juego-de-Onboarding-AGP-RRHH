@@ -609,11 +609,15 @@ export default function NivelVisual4() {
             source={currentSub.image}
             style={styles.subImage}
             resizeMode="contain"
-            onLoad={(e) => {
-              setNaturalSize({
-                width:  e.nativeEvent.source.width,
-                height: e.nativeEvent.source.height,
-              });
+            onLoad={(e: any) => {
+              // Nativo (iOS/Android) reporta el tamaño en nativeEvent.source;
+              // react-native-web reenvía el Event del DOM tal cual, sin ese
+              // campo, y expone el tamaño real en target.naturalWidth/Height.
+              const src = e.nativeEvent?.source;
+              const target = e.nativeEvent?.target;
+              const width = src?.width ?? target?.naturalWidth;
+              const height = src?.height ?? target?.naturalHeight;
+              if (width && height) setNaturalSize({ width, height });
             }}
             onLayout={(e) => {
               const { width, height, x, y } = e.nativeEvent.layout;

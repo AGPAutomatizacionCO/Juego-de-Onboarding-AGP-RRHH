@@ -561,27 +561,38 @@ exports.updateNivelEditor = async (req, res) => {
       `);
 
     if (editorKind === "visual" && visualPairs) {
-      for (const p of visualPairs) {
-        const visualKey = toInt(p?.id ?? p?.VISUAL_KEY ?? null);
-        if (!visualKey) continue;
+      // VISUAL_KEY no es IDENTITY (verificado contra sys.columns) - se asigna a
+      // mano, igual que en recordemos/social/lectura. Antes este bloque solo
+      // hacia UPDATE por VISUAL_KEY existente: en un nivel sin ninguna fila
+      // (p.ej. Lectura OF, Manipulacion, Metrologia, Calidad) no habia forma
+      // de cargar contenido nuevo desde el panel, sin importar cuantos pares
+      // se enviaran. Se cambia al mismo patron DELETE + INSERT de los demas
+      // editores para que funcione igual partiendo de cero o de datos ya
+      // existentes.
+      await new sql.Request(tx)
+        .input("nivelKey", sql.Int, nivelKey)
+        .query(`DELETE FROM dbo.Onboarding_Visual WHERE NIVELES_KEY = @nivelKey`);
 
+      const maxIdQ = await new sql.Request(tx).query(`SELECT ISNULL(MAX(VISUAL_KEY), 0) + 1 as NEXT_ID FROM dbo.Onboarding_Visual`);
+      let nextId = maxIdQ.recordset[0].NEXT_ID;
+
+      for (const p of visualPairs) {
         const foto = toRelUploadPath(p?.imagen);
         const concepto = toRelUploadPath(p?.imagenRespuesta);
+        if (!foto && !concepto) continue; // fila vacia, no se guarda
 
         await new sql.Request(tx)
+          .input("id", sql.Int, nextId)
           .input("nivelKey", sql.Int, nivelKey)
-          .input("visualKey", sql.Int, visualKey)
           .input("foto", sql.NVarChar(500), foto)
           .input("concepto", sql.NVarChar(500), concepto)
           .query(`
-            UPDATE dbo.Onboarding_Visual
-            SET
-              VISUAL_IMAGEN_FOTO = COALESCE(@foto, VISUAL_IMAGEN_FOTO),
-              VISUAL_IMAGEN_CONCEPTO = COALESCE(@concepto, VISUAL_IMAGEN_CONCEPTO),
-              VISUAL_MODIFICACION = GETDATE()
-            WHERE NIVELES_KEY = @nivelKey
-              AND VISUAL_KEY = @visualKey
+            INSERT INTO dbo.Onboarding_Visual
+              (VISUAL_KEY, NIVELES_KEY, VISUAL_IMAGEN_FOTO, VISUAL_IMAGEN_CONCEPTO, VISUAL_MODIFICACION)
+            VALUES
+              (@id, @nivelKey, @foto, @concepto, GETDATE())
           `);
+        nextId++;
       }
     }
 
