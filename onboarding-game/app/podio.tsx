@@ -19,7 +19,30 @@ type Player = {
   usuarioKey: number;
   nombre: string;
   puntaje: number | null;
+  tiempoSegundos: number | null;
 };
+
+const NOMBRES_ISLA: Record<number, string> = {
+  1: "Introducción AGP",
+  2: "HSE",
+  3: "Procesos de Producción",
+  4: "Conceptos Generales",
+  5: "Manipulación del Vidrio",
+  6: "Metrología",
+  7: "Lectura OF",
+  8: "Calidad",
+  9: "Evaluación Final",
+};
+
+function formatearTiempo(totalSegundos: number | null): string {
+  if (totalSegundos == null || !Number.isFinite(totalSegundos)) return "";
+  const h = Math.floor(totalSegundos / 3600);
+  const m = Math.floor((totalSegundos % 3600) / 60);
+  const s = totalSegundos % 60;
+  const mm = String(m).padStart(2, "0");
+  const ss = String(s).padStart(2, "0");
+  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
 
 export default function PodioScreen() {
   const router = useRouter();
@@ -76,6 +99,8 @@ export default function PodioScreen() {
             usuarioKey: row.usuarioKey,
             nombre: row.nombre ?? "Sin nombre",
             puntaje: row.puntaje != null ? Number(row.puntaje) : null,
+            tiempoSegundos:
+              row.tiempoSegundos != null ? Number(row.tiempoSegundos) : null,
           }))
         );
       } else {
@@ -89,12 +114,16 @@ export default function PodioScreen() {
     }
   };
 
-  // Respondentes arriba ordenados por puntaje, no-respondentes abajo
+  // Respondentes arriba ordenados por puntaje (mayor a menor) y desempate por
+  // tiempo (menor a mayor); no-respondentes abajo. Replica el mismo criterio
+  // que ya aplica el backend, para no depender de que el ordenamiento que
+  // llega en la respuesta se preserve.
   const sortedPlayers = [...players].sort((a, b) => {
     if (a.puntaje == null && b.puntaje == null) return 0;
     if (a.puntaje == null) return 1;
     if (b.puntaje == null) return -1;
-    return b.puntaje - a.puntaje;
+    if (b.puntaje !== a.puntaje) return b.puntaje - a.puntaje;
+    return (a.tiempoSegundos ?? Infinity) - (b.tiempoSegundos ?? Infinity);
   });
 
   // Top 3 = solo quienes tienen puntaje
@@ -120,15 +149,9 @@ export default function PodioScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>🏆 Podio - Evaluación Final</Text>
+        <Text style={styles.title}>🏆 Podio</Text>
         <Text style={styles.subtitle}>
-          {islaKey === 1
-            ? "Introducción"
-            : islaKey === 2
-            ? "HSE"
-            : islaKey === 3
-            ? "Procesos"
-            : `Isla ${islaKey}`}
+          {NOMBRES_ISLA[islaKey] ?? `Isla ${islaKey}`}
         </Text>
       </View>
 
@@ -142,6 +165,7 @@ export default function PodioScreen() {
                 {top3[1].nombre}
               </Text>
               <Text style={styles.medalScore}>{top3[1].puntaje}%</Text>
+              <Text style={styles.medalTime}>{formatearTiempo(top3[1].tiempoSegundos)}</Text>
             </View>
           )}
 
@@ -157,6 +181,7 @@ export default function PodioScreen() {
               <Text style={[styles.medalScore, { fontSize: 24 }]}>
                 {top3[0].puntaje}%
               </Text>
+              <Text style={styles.medalTime}>{formatearTiempo(top3[0].tiempoSegundos)}</Text>
             </View>
           )}
 
@@ -167,6 +192,7 @@ export default function PodioScreen() {
                 {top3[2].nombre}
               </Text>
               <Text style={styles.medalScore}>{top3[2].puntaje}%</Text>
+              <Text style={styles.medalTime}>{formatearTiempo(top3[2].tiempoSegundos)}</Text>
             </View>
           )}
         </View>
@@ -182,7 +208,10 @@ export default function PodioScreen() {
               {p.nombre}
             </Text>
             {p.puntaje != null ? (
-              <Text style={styles.playerScore}>{p.puntaje}%</Text>
+              <>
+                <Text style={styles.playerTime}>{formatearTiempo(p.tiempoSegundos)}</Text>
+                <Text style={styles.playerScore}>{p.puntaje}%</Text>
+              </>
             ) : (
               <Text style={styles.playerNoResponse}>Aún no responde</Text>
             )}
@@ -266,6 +295,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginTop: 5,
   },
+  medalTime: {
+    color: "#AAAAAA",
+    fontSize: 12,
+    marginTop: 2,
+  },
   listTitle: {
     color: "#AAAAAA",
     fontSize: 13,
@@ -300,6 +334,11 @@ const styles = StyleSheet.create({
     color: "#a3ecf1",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  playerTime: {
+    color: "#AAAAAA",
+    fontSize: 13,
+    marginRight: 10,
   },
   playerNoResponse: {
     color: "#6B7280",
