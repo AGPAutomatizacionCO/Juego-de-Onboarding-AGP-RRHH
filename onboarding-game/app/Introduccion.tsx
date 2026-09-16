@@ -15,6 +15,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_BASE_URL } from "./config";
 import { intentarConsumirReintento } from "./reintentoNivel";
+import { useToast } from "./Toast";
 
 /* ===== helper ===== */
 async function apiJson(url: string, options?: RequestInit) {
@@ -67,6 +68,7 @@ async function ensureUsuarioKeyOrNull(fromParams: number | null) {
 
 export default function IntroduccionAGP() {
   const router = useRouter();
+  const { showToast, ToastView } = useToast();
   const params = useLocalSearchParams();
 
   const { width, height } = Dimensions.get("window");
@@ -603,14 +605,10 @@ const onPressNivel = async (nivelId: number, screen: string) => {
           5: "Evaluación Final"
         };
         const nombreNivel = levelNames[nivelId] || `Nivel ${nivelId}`;
-        Alert.alert(
-          `${nombreNivel} completado`,
-          `Ya has completado este nivel.\nTu resultado: ${scoreText}`,
-          [{ text: "OK" }]
-        );
+        showToast(`${nombreNivel} completado - Tu resultado: ${scoreText}`);
         return;
       }
-      Alert.alert("Reintento habilitado", "El administrador habilitó repetir este nivel.");
+      showToast("Reintento habilitado por el administrador.");
     }
 
     if (nivelId > progresoNivelEfectivo) {
@@ -792,6 +790,7 @@ const onPressNivel = async (nivelId: number, screen: string) => {
           })}
         </ImageBackground>
       </Animated.ScrollView>
+      <ToastView />
     </View>
   );
 }

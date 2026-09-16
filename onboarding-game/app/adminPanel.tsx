@@ -20,6 +20,7 @@ import {
 } from "react-native";
 import { scaleDP } from "./scale";
 import { API_BASE_URL } from "./config";
+import { useToast } from "./Toast";
 
 /* ===== RESPONSIVE HELPER ===== */
 const { width: SW, height: SH, width: screenWidth } = Dimensions.get("window");
@@ -400,6 +401,7 @@ function completarNiveles(nivelesBD: Nivel[], islaKey: number): Nivel[] {
 
 export default function AdminPanel() {
   const router = useRouter();
+  const { showToast, ToastView } = useToast();
 
   const API_URL = useMemo(() => {
     const raw = API_BASE_URL;
@@ -628,30 +630,37 @@ export default function AdminPanel() {
   /* ========================= LOGIN ========================= */
 
   const validarAdmin = useCallback(async () => {
-     // 👇 PONLO AQUÍ
-  await AsyncStorage.clear();
-  console.log("🧹 STORAGE LIMPIADO");
-  
     if (!adminUser.trim() || !adminPass.trim()) {
-      Alert.alert("Dato faltante", "Ingresa usuario y contrasena.");
+      showToast("Ingresa usuario y contraseña.");
       return;
     }
     const url = `${API_URL}/admin/auth/login`;
-    console.log("[ADMIN] Intentando login en:", url, "user:", adminUser.trim());
     try {
       const resp = await apiJson(url, {
         method: "POST",
         body: JSON.stringify({ user: adminUser.trim(), pass: adminPass.trim() }),
         timeoutMs: 30000,
       });
-      console.log("[ADMIN] Respuesta:", JSON.stringify(resp));
       if (resp?.success) { setShowLogin(false); return; }
-      Alert.alert("Acceso denegado", resp?.message || "Usuario o contrasena incorrectos.");
+      showToast(resp?.message || "Usuario o contraseña incorrectos.");
     } catch (e: any) {
-      console.log("[ADMIN] Error login:", e?.message || e);
-      Alert.alert("Error de conexion", `URL: ${url}\n\nError: ${e?.message || "Desconocido"}\n\nVerifica que:\n1. El backend este corriendo\n2. La IP sea correcta\n3. Estes en la misma red WiFi`);
+      // apiJson lanza el mensaje real del backend (p.ej. "Credenciales
+      // invalidas - contrasena incorrecta") cuando la API respondio pero con
+      // error de autenticacion; solo reformula el mensaje para fallos de red
+      // reales (timeout / sin conexion). Antes se mostraba SIEMPRE el aviso
+      // de "revisa tu WiFi", incluso cuando el usuario simplemente escribio
+      // mal la contrasena.
+      const msg = String(e?.message || "");
+      const esErrorDeRed =
+        msg.startsWith("Tiempo de espera agotado") ||
+        msg.toLowerCase().includes("no se pudo conectar al api");
+      if (esErrorDeRed) {
+        Alert.alert("Error de conexión", `${msg}\n\nVerifica que:\n1. El backend este encendido\n2. Estes en la misma red WiFi`);
+      } else {
+        showToast(msg || "Usuario o contraseña incorrectos.");
+      }
     }
-  }, [API_URL, adminUser, adminPass]);
+  }, [API_URL, adminUser, adminPass, showToast]);
 
   /* ========================= PORCENTAJES ========================= */
 
@@ -1715,6 +1724,7 @@ export default function AdminPanel() {
           </>
         )}
       </View>
+      <ToastView />
     </ImageBackground>
   );
 }
