@@ -204,6 +204,13 @@ exports.getResultado = async function getResultado(req, res) {
 // ✅ El jugador consume su propio permiso de reintento justo al pulsar "Comenzar"
 // (nunca antes) — así el admin puede togglear el permiso libremente sin riesgo de
 // interrumpir una evaluación que ya está en curso.
+//
+// Al consumirse se borra el resultado anterior (puntaje, aprobado, vidas,
+// fallos) para que el nivel quede como recien empezado, PERO se conserva
+// INTENTO — es el conteo total de veces que se ha jugado este nivel, no debe
+// reiniciarse por un reintento. El siguiente guardado de resultado lo
+// incrementa normalmente (ver upsertResultadoNivel/visual.model.js y sus
+// equivalentes de lectura/recordemos/social).
 exports.consumirReintento = async function consumirReintento(req, res) {
   try {
     const { usuarioKey, nivelKey } = req.body;
@@ -221,7 +228,11 @@ exports.consumirReintento = async function consumirReintento(req, res) {
       .input("nivelKey", sql.Int, nk)
       .query(`
         UPDATE ${TABLA_RESULTADOS}
-        SET REINTENTO_HABILITADO = 0
+        SET REINTENTO_HABILITADO = 0,
+            PUNTAJE = NULL,
+            APROBADO = 0,
+            MISMATCHES = NULL,
+            LIVES_LEFT = NULL
         WHERE USUARIO_KEY = @usuarioKey
           AND NIVELES_KEY = @nivelKey
       `);

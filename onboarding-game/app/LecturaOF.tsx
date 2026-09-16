@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_BASE_URL } from "./config";
+import { intentarConsumirReintento } from "./reintentoNivel";
 
 async function apiJson(url: string, options?: RequestInit) {
   const res = await fetch(url, {
@@ -271,7 +272,7 @@ export default function LecturaOF() {
   ]);
 
   /* ── ON PRESS NIVEL ── */
-  const onPressNivel = (nivelId: number, screen: string) => {
+  const onPressNivel = async (nivelId: number, screen: string) => {
     if (!usuarioKey) {
       Alert.alert(
         "Falta sesión",
@@ -291,15 +292,19 @@ export default function LecturaOF() {
     else if (nivelId === 5 && evaluacionDoneLocal) { alreadyDone = true; scoreText = evaluacionScoreLocal  != null ? `${evaluacionScoreLocal}%` : "100%"; }
 
     if (alreadyDone) {
-      const levelNames: Record<number, string> = {
-        1: "Visual", 2: "Lectura", 3: "Recordemos", 4: "Social", 5: "Evaluación Final",
-      };
-      Alert.alert(
-        `${levelNames[nivelId] || `Nivel ${nivelId}`} completado`,
-        `Ya has completado este nivel.\nTu resultado: ${scoreText}`,
-        [{ text: "OK" }]
-      );
-      return;
+      const reintentoOk = await intentarConsumirReintento(usuarioKey, 7, nivelId);
+      if (!reintentoOk) {
+        const levelNames: Record<number, string> = {
+          1: "Visual", 2: "Lectura", 3: "Recordemos", 4: "Social", 5: "Evaluación Final",
+        };
+        Alert.alert(
+          `${levelNames[nivelId] || `Nivel ${nivelId}`} completado`,
+          `Ya has completado este nivel.\nTu resultado: ${scoreText}`,
+          [{ text: "OK" }]
+        );
+        return;
+      }
+      Alert.alert("Reintento habilitado", "El administrador habilitó repetir este nivel.");
     }
 
     if (nivelId > progresoNivelEfectivo) {
