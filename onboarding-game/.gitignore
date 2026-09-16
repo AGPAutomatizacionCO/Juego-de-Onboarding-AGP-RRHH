@@ -45,3 +45,6 @@ app-example
 # generated native folders
 /ios
 /android
+
+# scripts locales de desarrollo (rutas/entorno de una máquina especifica)
+run-web.cmd
