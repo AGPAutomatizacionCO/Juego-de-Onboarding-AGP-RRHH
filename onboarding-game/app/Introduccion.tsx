@@ -305,14 +305,6 @@ export default function IntroduccionAGP() {
 
       console.log("📦 Visual progress:", { done, score });
 
-      // Si no está en local pero el progresoNivelBD > 1, significa que ya se completó
-      // progresoNivel = 2 significa que completó nivel 1 y está en el 2
-      // progresoNivel = 3 significa que completó niveles 1 y 2, está en el 3
-      if (done !== "true" && progresoNivelBD >= 2) {
-        console.log("📦 Visual: marcado como completado por progresoNivelBD");
-        done = "true";
-      }
-
       setVisualDoneLocal(done === "true");
 
       const n = score ? Number(score) : null;
@@ -323,12 +315,6 @@ export default function IntroduccionAGP() {
       // Lectura
       let lecturaDone = await AsyncStorage.getItem(PROG_LECTURA_DONE_KEY);
       let lecturaScore = await AsyncStorage.getItem(PROG_LECTURA_SCORE_KEY);
-
-      // progresoNivelBD >= 3 significa que completó lectura (nivel 2)
-      if (lecturaDone !== "true" && progresoNivelBD >= 3) {
-        console.log("📦 Lectura: marcada como completada por progresoNivelBD");
-        lecturaDone = "true";
-      }
 
       console.log("📦 Lectura progress:", { done: lecturaDone, score: lecturaScore });
 
@@ -345,12 +331,6 @@ export default function IntroduccionAGP() {
         `nivelCompleted_1_${NIVEL_RECORDEMOS_KEY}`
       );
 
-      // progresoNivelBD >= 4 significa que completó recordemos (nivel 3)
-      if (recDone !== "true" && fallbackDone !== "1" && progresoNivelBD >= 4) {
-        console.log("📦 Recordemos: marcado como completado por progresoNivelBD");
-        recDone = "true";
-      }
-
       const isRecDone = recDone === "true" || fallbackDone === "1";
       setRecordemosDoneLocal(isRecDone);
 
@@ -361,12 +341,6 @@ export default function IntroduccionAGP() {
       let socDone = await AsyncStorage.getItem(PROG_SOCIAL_DONE_KEY);
       let socScore = await AsyncStorage.getItem(PROG_SOCIAL_SCORE_KEY);
 
-      // progresoNivelBD >= 5 significa que completó social (nivel 4)
-      if (socDone !== "true" && progresoNivelBD >= 5) {
-        console.log("📦 Social: marcado como completado por progresoNivelBD");
-        socDone = "true";
-      }
-
       setSocialDoneLocal(socDone === "true");
 
       const sn = socScore ? Number(socScore) : null;
@@ -375,12 +349,6 @@ export default function IntroduccionAGP() {
       // Evaluación
       let evaDone = await AsyncStorage.getItem(PROG_EVALUACION_DONE_KEY);
       let evaScore = await AsyncStorage.getItem(PROG_EVALUACION_SCORE_KEY);
-
-      // progresoNivelBD >= 6 significa que completó evaluación (nivel 5)
-      if (evaDone !== "true" && progresoNivelBD >= 6) {
-        console.log("📦 Evaluación: marcada como completada por progresoNivelBD");
-        evaDone = "true";
-      }
 
       setEvaluacionDoneLocal(evaDone === "true");
 
