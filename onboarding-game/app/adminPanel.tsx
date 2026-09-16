@@ -1032,8 +1032,12 @@ export default function AdminPanel() {
       );
     }
 
-    // Vista con niveles expandibles inline
-    const isla = selectedIslaPanel;
+    // Vista con niveles expandibles inline.
+    // OJO: no usar selectedIslaPanel directo - es una copia tomada al hacer
+    // click en la isla, y cargarPorcentajesUsuario actualiza el objeto vivo
+    // en `islas`, no esa copia. Sin este lookup los porcentajes nunca se
+    // reflejan aqui aunque la llamada al backend si haya traido el dato.
+    const isla = islas.find((i) => i.id === selectedIslaPanel.id) ?? selectedIslaPanel;
 
     return (
       <View style={styles.box}>
@@ -1083,9 +1087,11 @@ export default function AdminPanel() {
                 >
                   <Text style={styles.nivelRowText}>{nivel.nombre}</Text>
                   <View style={styles.nivelExpandArea}>
-                    <Text style={styles.nivelPercentText}>
-                      {nivel.porcentaje != null ? `${nivel.porcentaje}%` : "--"}
-                    </Text>
+                    {!isExpanded && (
+                      <Text style={styles.nivelPercentText}>
+                        {nivel.porcentaje != null ? `${nivel.porcentaje}%` : "--"}
+                      </Text>
+                    )}
                     <View style={styles.nivelPlusBox}>
                       <Text style={styles.nivelPlusText}>{isExpanded ? "-" : "+"}</Text>
                     </View>
@@ -1117,26 +1123,30 @@ export default function AdminPanel() {
                           </View>
                         ))}
 
-                        {/* Reintento: solo tiene sentido si ya hay un resultado guardado */}
+                        {/* Reintento: solo tiene sentido si ya hay un resultado guardado.
+                            Una vez habilitado, el admin ya no puede cancelarlo tocando -
+                            queda fijo hasta que el jugador lo consuma de verdad al
+                            reintentar (eso es lo que lo apaga, ver consumirReintento en
+                            el backend). Cuando esta apagado, el admin puede volver a
+                            habilitarlo cuando quiera. */}
                         {cached.meta && (
-                          <TouchableOpacity
-                            style={[
-                              styles.reintentoBtn,
-                              cached.meta.reintentoHabilitado && styles.reintentoBtnOn,
-                            ]}
-                            disabled={reintentoLoading === nivel.id}
-                            onPress={() =>
-                              toggleReintento(nivel, !cached.meta!.reintentoHabilitado)
-                            }
-                          >
-                            <Text style={styles.reintentoBtnText}>
-                              {reintentoLoading === nivel.id
-                                ? "Actualizando..."
-                                : cached.meta.reintentoHabilitado
-                                ? "Reintento habilitado (tocar para cancelar)"
-                                : "Habilitar reintento"}
-                            </Text>
-                          </TouchableOpacity>
+                          cached.meta.reintentoHabilitado ? (
+                            <View style={[styles.reintentoBtn, styles.reintentoBtnOn]}>
+                              <Text style={styles.reintentoBtnText}>
+                                Reintento habilitado - esperando a que el usuario lo intente
+                              </Text>
+                            </View>
+                          ) : (
+                            <TouchableOpacity
+                              style={styles.reintentoBtn}
+                              disabled={reintentoLoading === nivel.id}
+                              onPress={() => toggleReintento(nivel, true)}
+                            >
+                              <Text style={styles.reintentoBtnText}>
+                                {reintentoLoading === nivel.id ? "Actualizando..." : "Habilitar reintento"}
+                              </Text>
+                            </TouchableOpacity>
+                          )
                         )}
 
                         {/* Respuestas */}
