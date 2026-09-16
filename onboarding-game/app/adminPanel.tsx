@@ -244,6 +244,11 @@ function buildReportPdfHtml(data: ReporteCompletoData) {
     body += "</tr>";
   }
 
+  const soloUnOnboarding = (data.cohortes || []).length === 1 ? data.cohortes[0].numeroOnboarding : null;
+  const titulo = soloUnOnboarding != null
+    ? `Reporte Onboarding AGP - Grupo #${soloUnOnboarding}`
+    : "Reporte Onboarding AGP";
+
   return `<!DOCTYPE html><html><head><meta charset="utf-8"/><style>
 body{font-family:system-ui,sans-serif;font-size:9px;color:#111;margin:12px;}
 table{border-collapse:collapse;width:100%;margin-bottom:14px;}
@@ -255,7 +260,7 @@ h2{font-size:12px;color:#0F1B4C;margin-top:14px;margin-bottom:6px;}
 p{color:#444;font-size:10px;}
 .summary-card{background:#F0F4FF;border:1px solid #C7D2FE;border-radius:6px;padding:8px;margin-bottom:6px;}
 </style></head><body>
-<h1>Reporte Onboarding AGP</h1>
+<h1>${htmlEsc(titulo)}</h1>
 <p>Generado: ${htmlEsc(data.generado)}</p>
 <h2>Resumen por numero de onboarding</h2>
 <table><thead><tr><th># Onboarding</th><th>Participantes</th><th>Promedio avance (%)</th></tr></thead><tbody>${cohortRows}</tbody></table>
@@ -435,6 +440,19 @@ export default function AdminPanel() {
   const [reporteCompleto, setReporteCompleto] = useState<ReporteCompletoData | null>(null);
   const [loadingReporte, setLoadingReporte] = useState<boolean>(false);
   const [exportandoPdf, setExportandoPdf] = useState<boolean>(false);
+  // Mismo patron de seleccion que Isla/Nivel en el Panel: primero se elige el
+  // onboarding, y el reporte (pantalla + PDF) solo muestra ese grupo - no el
+  // listado completo de todos los onboardings mezclados.
+  const [selectedOnboardingReporte, setSelectedOnboardingReporte] = useState<number | null>(null);
+
+  const reporteFiltrado = useMemo<ReporteCompletoData | null>(() => {
+    if (!reporteCompleto || selectedOnboardingReporte == null) return null;
+    return {
+      ...reporteCompleto,
+      cohortes: (reporteCompleto.cohortes || []).filter((c) => c.numeroOnboarding === selectedOnboardingReporte),
+      participantes: (reporteCompleto.participantes || []).filter((p) => p.numeroOnboarding === selectedOnboardingReporte),
+    };
+  }, [reporteCompleto, selectedOnboardingReporte]);
 
   const [loaded] = useFonts({
     "PlusJakartaSans-Regular": require("../assets/fonts/PlusJakartaSans-Regular.ttf"),
@@ -583,13 +601,17 @@ export default function AdminPanel() {
   }, [showLogin, menu, cargarReporteCompleto]);
 
   const exportarReportePdf = useCallback(async () => {
-    if (!reporteCompleto) {
+    if (selectedOnboardingReporte == null) {
+      Alert.alert("Selecciona un onboarding", "Elige primero el numero de onboarding para el que quieres el PDF.");
+      return;
+    }
+    if (!reporteFiltrado) {
       Alert.alert("Sin datos", "Actualiza el reporte antes de exportar.");
       return;
     }
     setExportandoPdf(true);
     try {
-      const html = buildReportPdfHtml(reporteCompleto);
+      const html = buildReportPdfHtml(reporteFiltrado);
       const { uri } = await Print.printToFileAsync({ html, width: 842, height: 595 });
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, { mimeType: "application/pdf", dialogTitle: "Compartir o guardar reporte PDF" });
@@ -601,7 +623,7 @@ export default function AdminPanel() {
     } finally {
       setExportandoPdf(false);
     }
-  }, [reporteCompleto]);
+  }, [reporteFiltrado, selectedOnboardingReporte]);
 
   /* ========================= LOGIN ========================= */
 
@@ -1544,13 +1566,61 @@ export default function AdminPanel() {
   /* ===== VISTA REPORTE ===== */
 
   const renderReporte = () => {
-    const d = reporteCompleto;
+    // Paso 1: elegir el onboarding, igual que Isla/Nivel en el Panel - antes
+    // de esto no se muestra detalle ni se puede descargar nada.
+    if (selectedOnboardingReporte == null) {
+      return (
+        <View style={styles.box}>
+          <Text style={styles.title}>Reportes</Text>
+          <Text style={styles.reporteSub}>Selecciona el numero de onboarding para ver y descargar su reporte.</Text>
+
+          <View style={styles.reporteActionsRow}>
+            <TouchableOpacity style={styles.reporteBtnSecondary} onPress={cargarReporteCompleto} disabled={loadingReporte}>
+              <Text style={styles.reporteBtnSecondaryText}>{loadingReporte ? "Actualizando..." : "Actualizar datos"}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {loadingReporte && !reporteCompleto ? (
+            <Text style={styles.loadingText}>Cargando reporte...</Text>
+          ) : !reporteCompleto || (reporteCompleto.cohortes || []).length === 0 ? (
+            <Text style={styles.loadingText}>No hay datos. Comprueba la API y la base de datos.</Text>
+          ) : (
+            <ScrollView style={{ marginTop: sp(8) }}>
+              {reporteCompleto.cohortes.map((c) => (
+                <TouchableOpacity
+                  key={`co-${c.numeroOnboarding}`}
+                  style={styles.islaRow}
+                  onPress={() => setSelectedOnboardingReporte(c.numeroOnboarding)}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.islaRowText}>Onboarding #{c.numeroOnboarding}</Text>
+                    <Text style={styles.reporteCardLine}>
+                      {c.participantes} participante{c.participantes === 1 ? "" : "s"} · promedio {c.promedioAvance != null ? `${c.promedioAvance}%` : "--"}
+                    </Text>
+                  </View>
+                  <View style={styles.islaRowPlusBox}>
+                    <Text style={styles.islaRowPlus}>+</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      );
+    }
+
+    // Paso 2: reporte y PDF de un solo onboarding.
+    const d = reporteFiltrado;
 
     return (
       <View style={[styles.box, { maxHeight: "94%" }]}>
-        <Text style={styles.title}>Reportes</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => setSelectedOnboardingReporte(null)}>
+          <Text style={styles.backText}>Volver</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.title}>Onboarding #{selectedOnboardingReporte}</Text>
         <Text style={styles.reporteSub}>
-          Avance global por cohorte y detalle personal. Los porcentajes usan el ultimo intento registrado por nivel.
+          Avance de este grupo. Los porcentajes usan el ultimo intento registrado por nivel.
         </Text>
 
         <View style={styles.reporteActionsRow}>
@@ -1558,38 +1628,31 @@ export default function AdminPanel() {
             <Text style={styles.reporteBtnSecondaryText}>{loadingReporte ? "Actualizando..." : "Actualizar datos"}</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.reporteBtnPrimary, (!reporteCompleto || exportandoPdf) && { opacity: 0.45 }]}
+            style={[styles.reporteBtnPrimary, (!d || exportandoPdf) && { opacity: 0.45 }]}
             onPress={exportarReportePdf}
-            disabled={!reporteCompleto || exportandoPdf}
+            disabled={!d || exportandoPdf}
           >
             <Text style={styles.reporteBtnPrimaryText}>{exportandoPdf ? "Generando PDF..." : "Descargar PDF"}</Text>
           </TouchableOpacity>
         </View>
 
-        {loadingReporte && !d ? (
-          <Text style={styles.loadingText}>Cargando reporte...</Text>
-        ) : !d ? (
-          <Text style={styles.loadingText}>No hay datos. Comprueba la API y la base de datos.</Text>
+        {!d ? (
+          <Text style={styles.loadingText}>Este onboarding ya no tiene datos - actualiza o vuelve a la lista.</Text>
         ) : (
           <ScrollView style={{ flex: 1, marginTop: sp(4) }} contentContainerStyle={{ paddingBottom: sp(24) }} showsVerticalScrollIndicator>
-            {/* General por cohorte */}
-            <Text style={styles.reporteSectionTitle}>General - por numero de onboarding</Text>
-            {(d.cohortes || []).length === 0 ? (
-              <Text style={styles.loadingText}>Sin cohortes con usuarios.</Text>
-            ) : (
-              (d.cohortes || []).map((c) => (
-                <View key={`co-${c.numeroOnboarding}`} style={styles.reporteCard}>
-                  <Text style={styles.reporteCardStrong}>Onboarding #{c.numeroOnboarding}</Text>
-                  <Text style={styles.reporteCardLine}>Participantes: {c.participantes}</Text>
-                  <Text style={styles.reporteCardLine}>Promedio avance: {c.promedioAvance != null ? `${c.promedioAvance}%` : "--"}</Text>
-                </View>
-              ))
-            )}
+            {/* Resumen de este onboarding */}
+            {(d.cohortes || []).map((c) => (
+              <View key={`co-${c.numeroOnboarding}`} style={styles.reporteCard}>
+                <Text style={styles.reporteCardStrong}>Onboarding #{c.numeroOnboarding}</Text>
+                <Text style={styles.reporteCardLine}>Participantes: {c.participantes}</Text>
+                <Text style={styles.reporteCardLine}>Promedio avance: {c.promedioAvance != null ? `${c.promedioAvance}%` : "--"}</Text>
+              </View>
+            ))}
 
             {/* Personal */}
             <Text style={styles.reporteSectionTitle}>Personal - participantes</Text>
             {(d.participantes || []).length === 0 ? (
-              <Text style={styles.loadingText}>No hay usuarios registrados.</Text>
+              <Text style={styles.loadingText}>No hay usuarios registrados en este onboarding.</Text>
             ) : (
               (d.participantes || []).map((p) => (
                 <View key={`u-${p.usuarioKey}`} style={styles.reporteCard}>
