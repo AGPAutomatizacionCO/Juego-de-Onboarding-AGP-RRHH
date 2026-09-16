@@ -211,6 +211,10 @@ exports.getResultado = async function getResultado(req, res) {
 // reiniciarse por un reintento. El siguiente guardado de resultado lo
 // incrementa normalmente (ver upsertResultadoNivel/visual.model.js y sus
 // equivalentes de lectura/recordemos/social).
+//
+// PUNTAJE y APROBADO son NOT NULL en el esquema real (verificado contra
+// AGP_RRHH) — se resetean a 0, no a NULL, o el UPDATE falla con
+// "Cannot insert the value NULL". MISMATCHES y LIVES_LEFT sí son nullable.
 exports.consumirReintento = async function consumirReintento(req, res) {
   try {
     const { usuarioKey, nivelKey } = req.body;
@@ -229,7 +233,7 @@ exports.consumirReintento = async function consumirReintento(req, res) {
       .query(`
         UPDATE ${TABLA_RESULTADOS}
         SET REINTENTO_HABILITADO = 0,
-            PUNTAJE = NULL,
+            PUNTAJE = 0,
             APROBADO = 0,
             MISMATCHES = NULL,
             LIVES_LEFT = NULL
