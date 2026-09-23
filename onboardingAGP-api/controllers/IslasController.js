@@ -95,7 +95,7 @@ exports.getResultadosPorUsuario = async (req, res) => {
     (result.recordset || []).forEach(row => {
       resultados[`nivel_${row.NIVELES_KEY}`] = {
         puntaje: row.PUNTAJE,
-        aprobado: row.APROBADO === 1,
+        aprobado: row.APROBADO === true || row.APROBADO === 1,
         intento: row.INTENTO,
         mismatches: row.MISMATCHES,
         livesLeft: row.LIVES_LEFT,

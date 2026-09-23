@@ -204,6 +204,18 @@ interface ReporteCompletoData {
   islas: ReporteIslaCatalogo[];
 }
 
+function nivelesCompletados(p: ReporteParticipanteFila) {
+  let completados = 0;
+  let total = 0;
+  for (const isla of p.porIsla || []) {
+    for (const nv of isla.niveles || []) {
+      total += 1;
+      if (nv.puntaje != null) completados += 1;
+    }
+  }
+  return { completados, total };
+}
+
 function htmlEsc(s: string) {
   return String(s ?? "")
     .replace(/&/g, "&amp;")
@@ -221,7 +233,7 @@ function buildReportPdfHtml(data: ReporteCompletoData) {
     .join("");
 
   let thead =
-    "<tr><th>Participante</th><th>C\u00e9dula</th><th># Onb.</th><th>Prom.</th>";
+    "<tr><th>Participante</th><th>C\u00e9dula</th><th># Onb.</th><th>Prom.</th><th>Niveles</th>";
   for (const isla of data.islas || []) {
     for (const nv of isla.niveles || []) {
       thead += `<th>${htmlEsc(`I${isla.islaKey} ${nv.nivelNombre}`)}</th>`;
@@ -231,8 +243,9 @@ function buildReportPdfHtml(data: ReporteCompletoData) {
 
   let body = "";
   for (const p of data.participantes || []) {
+    const { completados, total } = nivelesCompletados(p);
     body += "<tr>";
-    body += `<td>${htmlEsc(p.nombre)}</td><td>${htmlEsc(p.cedula)}</td><td>${p.numeroOnboarding}</td><td style="text-align:center;font-weight:bold">${p.promedioGeneral != null ? `${p.promedioGeneral}%` : "\u2014"}</td>`;
+    body += `<td>${htmlEsc(p.nombre)}</td><td>${htmlEsc(p.cedula)}</td><td>${p.numeroOnboarding}</td><td style="text-align:center;font-weight:bold">${p.promedioGeneral != null ? `${p.promedioGeneral}%` : "\u2014"}</td><td style="text-align:center">${completados}/${total}</td>`;
     for (const isla of data.islas || []) {
       const bloque = p.porIsla?.find((x) => x.islaKey === isla.islaKey);
       for (const nv of isla.niveles || []) {
@@ -446,6 +459,28 @@ export default function AdminPanel() {
   // onboarding, y el reporte (pantalla + PDF) solo muestra ese grupo - no el
   // listado completo de todos los onboardings mezclados.
   const [selectedOnboardingReporte, setSelectedOnboardingReporte] = useState<number | null>(null);
+  // Buscador de la pantalla de reportes: por cedula, nombre o numero de
+  // onboarding, por coincidencia parcial - devuelve todos los participantes
+  // que calcen, no solo uno exacto.
+  const [busquedaReporte, setBusquedaReporte] = useState<string>("");
+
+  const normalizarTexto = (s: string) =>
+    s
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase()
+      .trim();
+
+  const resultadosBusquedaReporte = useMemo(() => {
+    const termino = normalizarTexto(busquedaReporte);
+    if (!termino) return [];
+    return (reporteCompleto?.participantes || []).filter((p) => {
+      const nombre = normalizarTexto(p.nombre || "");
+      const cedula = normalizarTexto(p.cedula || "");
+      const onboarding = String(p.numeroOnboarding ?? "");
+      return nombre.includes(termino) || cedula.includes(termino) || onboarding.includes(termino);
+    });
+  }, [reporteCompleto, busquedaReporte]);
 
   const reporteFiltrado = useMemo<ReporteCompletoData | null>(() => {
     if (!reporteCompleto || selectedOnboardingReporte == null) return null;
@@ -601,6 +636,18 @@ export default function AdminPanel() {
   useEffect(() => {
     if (!showLogin && menu === "reporte") cargarReporteCompleto();
   }, [showLogin, menu, cargarReporteCompleto]);
+
+  // Al buscar una persona, refresca contra el servidor (con un pequeno
+  // debounce) en vez de filtrar el reporte ya cargado - asi si acaba de
+  // completar un nivel, se ve reflejado sin tener que tocar "Actualizar
+  // datos" a mano.
+  useEffect(() => {
+    if (!busquedaReporte.trim()) return;
+    const t = setTimeout(() => {
+      cargarReporteCompleto();
+    }, 500);
+    return () => clearTimeout(t);
+  }, [busquedaReporte, cargarReporteCompleto]);
 
   const exportarReportePdf = useCallback(async () => {
     if (selectedOnboardingReporte == null) {
@@ -1589,10 +1636,52 @@ export default function AdminPanel() {
             </TouchableOpacity>
           </View>
 
+          {/* Buscador: por cedula, nombre o numero de onboarding, por coincidencia parcial */}
+          <View style={styles.searchRow}>
+            <Text style={styles.ccLabel}>Buscar:</Text>
+            <TextInput
+              style={styles.ccInput}
+              placeholder="Cedula, nombre o # de onboarding"
+              placeholderTextColor="#9CA3AF"
+              value={busquedaReporte}
+              onChangeText={setBusquedaReporte}
+            />
+          </View>
+
           {loadingReporte && !reporteCompleto ? (
             <Text style={styles.loadingText}>Cargando reporte...</Text>
           ) : !reporteCompleto || (reporteCompleto.cohortes || []).length === 0 ? (
             <Text style={styles.loadingText}>No hay datos. Comprueba la API y la base de datos.</Text>
+          ) : busquedaReporte.trim() ? (
+            <ScrollView style={{ marginTop: sp(8) }}>
+              {resultadosBusquedaReporte.length === 0 ? (
+                <Text style={styles.loadingText}>Sin coincidencias.</Text>
+              ) : (
+                resultadosBusquedaReporte.map((p) => {
+                  const { completados, total } = nivelesCompletados(p);
+                  return (
+                  <TouchableOpacity
+                    key={`bp-${p.usuarioKey}`}
+                    style={styles.islaRow}
+                    onPress={() => {
+                      setBusquedaReporte("");
+                      setSelectedOnboardingReporte(p.numeroOnboarding);
+                    }}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.islaRowText}>{p.nombre}</Text>
+                      <Text style={styles.reporteCardLine}>
+                        Cedula: {p.cedula} · Onboarding #{p.numeroOnboarding} · Niveles: {completados}/{total}
+                      </Text>
+                    </View>
+                    <View style={styles.islaRowPlusBox}>
+                      <Text style={styles.islaRowPlus}>+</Text>
+                    </View>
+                  </TouchableOpacity>
+                  );
+                })
+              )}
+            </ScrollView>
           ) : (
             <ScrollView style={{ marginTop: sp(8) }}>
               {reporteCompleto.cohortes.map((c) => (
@@ -1663,10 +1752,13 @@ export default function AdminPanel() {
             {(d.participantes || []).length === 0 ? (
               <Text style={styles.loadingText}>No hay usuarios registrados en este onboarding.</Text>
             ) : (
-              (d.participantes || []).map((p) => (
+              (d.participantes || []).map((p) => {
+                const { completados, total } = nivelesCompletados(p);
+                return (
                 <View key={`u-${p.usuarioKey}`} style={styles.reporteCard}>
                   <Text style={styles.reporteCardStrong}>{p.nombre}</Text>
                   <Text style={styles.reporteCardLine}>Cedula: {p.cedula} | Onboarding #{p.numeroOnboarding}</Text>
+                  <Text style={styles.reporteCardLine}>Niveles completados: {completados}/{total}</Text>
                   <View style={styles.reporteProgressBar}>
                     <View style={[styles.reporteProgressFill, { width: `${Math.min(p.promedioGeneral ?? 0, 100)}%` }]} />
                     <Text style={styles.reporteProgressText}>
@@ -1684,7 +1776,8 @@ export default function AdminPanel() {
                     </View>
                   ))}
                 </View>
-              ))
+                );
+              })
             )}
 
             {d.generado && (

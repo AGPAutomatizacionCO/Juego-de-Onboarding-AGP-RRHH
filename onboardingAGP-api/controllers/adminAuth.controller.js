@@ -1027,6 +1027,13 @@ exports.getReporteCompleto = async (req, res) => {
 
     const islasOrdenadas = [...islasMap.values()].sort((a, b) => a.islaKey - b.islaKey);
 
+    // Total de niveles del catálogo completo (mismo para todos los
+    // participantes) — se usa como denominador fijo de los promedios, para
+    // que un nivel/prueba aún no realizado cuente como 0 en vez de
+    // excluirse del cálculo. Así el promedio refleja el avance real sobre
+    // el onboarding completo, no solo sobre lo ya intentado.
+    const totalNivelesGlobal = islasOrdenadas.reduce((acc, isla) => acc + isla.niveles.length, 0);
+
     const participantes = [];
     for (const u of usersQ.recordset || []) {
       const uk = Number(u.USUARIO_KEY);
@@ -1057,10 +1064,12 @@ exports.getReporteCompleto = async (req, res) => {
           });
         }
 
+        // Denominador = total de niveles de la isla (no solo los
+        // intentados): un nivel sin jugar cuenta como 0 en el promedio.
         porIsla.push({
           islaKey: isla.islaKey,
           islaNombre: isla.islaNombre,
-          promedio: nIsla > 0 ? Math.round(sumIsla / nIsla) : null,
+          promedio: isla.niveles.length > 0 ? Math.round(sumIsla / isla.niveles.length) : null,
           niveles: nivelesDet,
         });
       }
@@ -1070,7 +1079,9 @@ exports.getReporteCompleto = async (req, res) => {
         nombre: String(u.USUARIO_NOMBRE ?? ""),
         cedula: String(u.USUARIO_CEDULA ?? ""),
         numeroOnboarding: Number(u.USUARIO_NUMERO_ONBOARDING ?? 0) || 0,
-        promedioGeneral: nGlobal > 0 ? Math.round(sumGlobal / nGlobal) : null,
+        // Denominador = total de niveles del onboarding completo (no solo
+        // los intentados): las pruebas no realizadas cuentan como 0.
+        promedioGeneral: totalNivelesGlobal > 0 ? Math.round(sumGlobal / totalNivelesGlobal) : null,
         porIsla,
       });
     }
@@ -1083,6 +1094,10 @@ exports.getReporteCompleto = async (req, res) => {
       }
       const c = cohortMap.get(num);
       c.participantes += 1;
+      // Se incluyen TODOS los participantes de la cohorte, incluso los que
+      // no han jugado ningún nivel (promedioGeneral = 0 en ese caso), para
+      // que el promedio de la cohorte refleje el avance real del grupo
+      // completo y no solo el de quienes ya jugaron algo.
       if (p.promedioGeneral != null) {
         c.sumaProm += p.promedioGeneral;
         c.nProm += 1;
@@ -1093,7 +1108,7 @@ exports.getReporteCompleto = async (req, res) => {
       .map(([numeroOnboarding, v]) => ({
         numeroOnboarding,
         participantes: v.participantes,
-        promedioAvance: v.nProm > 0 ? Math.round(v.sumaProm / v.nProm) : null,
+        promedioAvance: v.participantes > 0 ? Math.round(v.sumaProm / v.participantes) : null,
       }))
       .sort((a, b) => a.numeroOnboarding - b.numeroOnboarding);
 
