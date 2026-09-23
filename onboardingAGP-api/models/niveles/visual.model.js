@@ -1,4 +1,5 @@
 const { connectDB, sql } = require("../../config/db");
+const { incrementarIntento } = require("../intentos.model");
 
 const TABLA_NIVELES = "dbo.Onboarding_Niveles";
 const TABLA_VISUAL = "dbo.Onboarding_Visual";
@@ -68,12 +69,17 @@ exports.upsertResultadoNivel = async ({
   const pool = await connectDB();
   if (!pool) throw new Error("No hay conexión con SQL Server");
 
+  // El conteo de INTENTO vive en Onboarding_Intentos_Nivel, aparte de esta
+  // fila, para que sobreviva al borrado que hace consumirReintento.
+  const intento = await incrementarIntento(usuarioKey, nivelKey);
+
   await pool
     .request()
     .input("USUARIO_KEY", sql.Int, Number(usuarioKey))
     .input("NIVELES_KEY", sql.Int, Number(nivelKey))
     .input("PUNTAJE", sql.Int, Number(puntaje))
     .input("APROBADO", sql.Bit, aprobado ? 1 : 0)
+    .input("INTENTO", sql.Int, intento)
     .input("MISMATCHES", sql.Int, Number(mismatches ?? 0))
     .input("LIVES_LEFT", sql.Int, Number(livesLeft ?? 0))
     .query(`
@@ -85,7 +91,7 @@ exports.upsertResultadoNivel = async ({
         UPDATE ${TABLA_RESULTADOS_NIVEL}
         SET PUNTAJE=@PUNTAJE,
             APROBADO=@APROBADO,
-            INTENTO = ISNULL(INTENTO, 0) + 1,
+            INTENTO=@INTENTO,
             MISMATCHES=@MISMATCHES,
             LIVES_LEFT=@LIVES_LEFT,
             FECHA=GETDATE()
@@ -96,7 +102,7 @@ exports.upsertResultadoNivel = async ({
         INSERT INTO ${TABLA_RESULTADOS_NIVEL}
           (USUARIO_KEY, NIVELES_KEY, PUNTAJE, APROBADO, INTENTO, MISMATCHES, LIVES_LEFT, FECHA)
         VALUES
-          (@USUARIO_KEY, @NIVELES_KEY, @PUNTAJE, @APROBADO, 1, @MISMATCHES, @LIVES_LEFT, GETDATE())
+          (@USUARIO_KEY, @NIVELES_KEY, @PUNTAJE, @APROBADO, @INTENTO, @MISMATCHES, @LIVES_LEFT, GETDATE())
       END
     `);
 };

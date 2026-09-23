@@ -1,5 +1,6 @@
 const sql = require("mssql");
 const { getPool } = require("../../config/db");
+const { incrementarIntento } = require("../intentos.model");
 
 /**
  * Obtiene las palabras y conceptos desde la tabla dbo.Onboarding_Recordemos
@@ -39,19 +40,9 @@ async function completarRecordemos({
   const pool = await getPool();
   if (!pool) throw new Error("No hay conexión a la base de datos (pool null).");
 
-  // 1) siguiente intento del nivel
-  const intentoRes = await pool
-    .request()
-    .input("USUARIO_KEY", sql.Int, usuarioKey)
-    .input("NIVELES_KEY", sql.Int, nivelKey)
-    .query(`
-      SELECT ISNULL(MAX(INTENTO), 0) + 1 AS NEXT_INTENTO
-      FROM dbo.Onboarding_Resultados_Nivel
-      WHERE USUARIO_KEY = @USUARIO_KEY
-        AND NIVELES_KEY = @NIVELES_KEY;
-    `);
-
-  const intento = intentoRes.recordset?.[0]?.NEXT_INTENTO ?? 1;
+  // 1) siguiente intento del nivel (guardado aparte, sobrevive al borrado
+  // de la fila de resultado que hace consumirReintento)
+  const intento = await incrementarIntento(usuarioKey, nivelKey);
 
   // 2) insertar resultado del nivel (100)
   await pool

@@ -4,6 +4,7 @@ const {
   obtenerCasosSocial,
 } = require("../../models/niveles/social.model");
 const { sql, getPool } = require("../../config/db");
+const { incrementarIntento } = require("../../models/intentos.model");
 
 const TABLA_USUARIOS = "dbo.Onboarding_Usuarios_NEW";
 
@@ -73,19 +74,9 @@ exports.completar = async (req, res) => {
 
     const pool = await getPool();
 
-    // 1) Obtener siguiente intento
-    const intentoRes = await pool
-      .request()
-      .input("USUARIO_KEY", sql.Int, uk)
-      .input("NIVELES_KEY", sql.Int, nk)
-      .query(`
-        SELECT ISNULL(MAX(INTENTO), 0) + 1 AS NEXT_INTENTO
-        FROM dbo.Onboarding_Resultados_Nivel
-        WHERE USUARIO_KEY = @USUARIO_KEY
-          AND NIVELES_KEY = @NIVELES_KEY;
-      `);
-
-    const intento = intentoRes.recordset?.[0]?.NEXT_INTENTO ?? 1;
+    // 1) Obtener siguiente intento (guardado aparte, sobrevive al borrado
+    // de la fila de resultado que hace consumirReintento)
+    const intento = await incrementarIntento(uk, nk);
 
     // 2) Insertar resultado
     await pool

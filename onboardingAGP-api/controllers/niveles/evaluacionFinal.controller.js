@@ -187,7 +187,7 @@ exports.getResultado = async function getResultado(req, res) {
       success: true,
       data: row ? {
         puntaje: row.PUNTAJE,
-        aprobado: row.APROBADO === 1,
+        aprobado: row.APROBADO === true || row.APROBADO === 1,
         fecha: row.FECHA,
         reintentoHabilitado: row.REINTENTO_HABILITADO === true || row.REINTENTO_HABILITADO === 1,
       } : null,
@@ -205,16 +205,19 @@ exports.getResultado = async function getResultado(req, res) {
 // (nunca antes) — así el admin puede togglear el permiso libremente sin riesgo de
 // interrumpir una evaluación que ya está en curso.
 //
-// Al consumirse se borra el resultado anterior (puntaje, aprobado, vidas,
-// fallos) para que el nivel quede como recien empezado, PERO se conserva
-// INTENTO — es el conteo total de veces que se ha jugado este nivel, no debe
-// reiniciarse por un reintento. El siguiente guardado de resultado lo
-// incrementa normalmente (ver upsertResultadoNivel/visual.model.js y sus
-// equivalentes de lectura/recordemos/social).
+// Al consumirse se BORRA la fila de resultado (no se resetea a PUNTAJE=0):
+// un UPDATE-reset dejaba una fila real con PUNTAJE=0 que el resto del
+// sistema (getResultadosPorUsuario, el reporte admin, etc.) no puede
+// distinguir de "completó el nivel con 0%" — si el jugador presionaba
+// "Volver" sin terminar, el nivel quedaba marcado como reprobado en vez de
+// "no completado". Borrando la fila, el nivel vuelve a verse exactamente
+// como si nunca se hubiera jugado.
 //
-// PUNTAJE y APROBADO son NOT NULL en el esquema real (verificado contra
-// AGP_RRHH) — se resetean a 0, no a NULL, o el UPDATE falla con
-// "Cannot insert the value NULL". MISMATCHES y LIVES_LEFT sí son nullable.
+// El conteo total de INTENTO no vive en esta fila — se guarda aparte en
+// Onboarding_Intentos_Nivel (ver models/intentos.model.js) precisamente
+// para sobrevivir a este borrado. No se toca aquí; lo incrementa el propio
+// nivel al guardar el resultado nuevo (ver upsertResultadoNivel/
+// visual.model.js y sus equivalentes de recordemos/social).
 exports.consumirReintento = async function consumirReintento(req, res) {
   try {
     const { usuarioKey, nivelKey } = req.body;
@@ -231,12 +234,7 @@ exports.consumirReintento = async function consumirReintento(req, res) {
       .input("usuarioKey", sql.Int, uk)
       .input("nivelKey", sql.Int, nk)
       .query(`
-        UPDATE ${TABLA_RESULTADOS}
-        SET REINTENTO_HABILITADO = 0,
-            PUNTAJE = 0,
-            APROBADO = 0,
-            MISMATCHES = NULL,
-            LIVES_LEFT = NULL
+        DELETE FROM ${TABLA_RESULTADOS}
         WHERE USUARIO_KEY = @usuarioKey
           AND NIVELES_KEY = @nivelKey
       `);
