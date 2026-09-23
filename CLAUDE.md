@@ -33,11 +33,16 @@ Monorepo. Antes de investigar desde cero, lee esto y los dos docs referenciados 
 
 ## Local (desarrollo)
 
-- Levantar frontend: doble clic en `onboarding-game/run-web.cmd` (o
-  `preview_start` con el config `onboarding-game-web` de `.claude/launch.json`,
-  que vive en la carpeta `AGP_CO_IDENTIFICADOR-REQUERIMIENTOS` — es el cwd real
-  de la sesión, no `onboarding-game/`). Abre en `http://localhost:8081`.
-- `run-web.cmd` está en `.gitignore` a propósito (rutas de una máquina específica).
+- Levantar todo (backend + frontend): doble clic en `onboarding-game/run-web.cmd`.
+  Levanta la API (puerto 3001) en una ventana aparte y el frontend (Expo web) en la
+  ventana actual — abre en `http://localhost:8081`. Sin la API corriendo, el login y
+  cualquier llamada al backend fallan con `Failed to fetch` (visto en sesión real).
+- También se puede levantar por separado con `preview_start` y los configs
+  `onboarding-game-api` / `onboarding-game-web` de `.claude/launch.json`, que vive en
+  la carpeta `AGP_CO_IDENTIFICADOR-REQUERIMIENTOS` — es el cwd real de la sesión, no
+  `onboarding-game/`.
+- `run-web.cmd` está en `.gitignore` a propósito (script de conveniencia local, no se
+  versiona). Detalle paso a paso (incluida la contraseña de BD) en `PRUEBAS-LOCALES.md`.
 
 ## Cuentas de prueba
 
@@ -64,6 +69,14 @@ Monorepo. Antes de investigar desde cero, lee esto y los dos docs referenciados 
   flujo que parece "no hacer nada" en el navegador puede estar funcionando bien
   y solo faltarle el popup visual (ya pasó dos veces: nivel sin imágenes, nivel
   ya completado). Confirmar con logs/consola antes de asumir bug.
+- `mapa.tsx` tenía una llamada que forzaba `USUARIO_PROGRESO_ISLA=9` (desbloquea
+  todo) cada vez que cualquier usuario abría el selector de islas — corregida
+  (2026-09-21). El mecanismo real de avance está en
+  `evaluacionFinal.controller.js` (`upsertResultado`, `if (nk >= 5)`), que
+  desbloquea la isla siguiente solo al guardar un resultado de su evaluación
+  final. Se corrió `onboardingAGP-api/scripts/fix-progreso-islas.js --apply`
+  contra producción para recalcular el progreso real de los 65 usuarios ya
+  afectados y borrar datos de islas a las que habían llegado fuera de orden.
 
 ## Tareas recientes (más detalle en specs/009-change-log.md)
 

@@ -128,6 +128,12 @@ cd "C:\Users\bmartin\OneDrive - AGP GROUP\Documentos\GitHub\Archivos Juego RRHH\
 Abre en el navegador. El `.env` del frontend ya apunta a `http://localhost:3001`, así que
 no hay que configurar nada.
 
+**Atajo:** doble clic en `onboarding-game/run-web.cmd` hace los pasos 3 y 4 en un solo
+clic — levanta la API en una ventana aparte (puerto 3001) y el frontend en la ventana
+actual. Si solo abres el frontend con `npx expo start --web` (sin la API corriendo), el
+login y cualquier llamada al backend fallan con `Failed to fetch` — es el síntoma de que
+falta este paso, no un bug del código. Cierra ambas ventanas para apagar todo.
+
 El juego está diseñado para **tablet horizontal de 1280×800**. Ajusta el tamaño de la
 ventana a esa proporción o la interfaz se verá desalineada.
 
@@ -195,3 +201,4 @@ Lo que vale la pena validar en esta prueba, en orden:
 | La tablet no conecta pero el navegador sí | Firewall de Windows, o `.env` con `localhost` en vez de la IP |
 | Advertencia de `EXPO_PUBLIC_API_URL no está definida` | Falta el `.env` del frontend. Es el aviso que agregó el parche |
 | Subir imagen falla en el panel admin | Falta la carpeta `onboardingAGP-api/uploads/` |
+| `Failed to fetch` al hacer login o entrar como admin | La API no está corriendo en local. Usa `run-web.cmd` (levanta ambas) o repite el Paso 3 en otra terminal |
