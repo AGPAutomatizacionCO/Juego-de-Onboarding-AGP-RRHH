@@ -15,6 +15,7 @@ import {
   View,
 } from "react-native";
 import { API_BASE_URL } from "./config";
+import Svg, { Line, Circle } from "react-native-svg";
 
 /* =========================================================
    CONFIG
@@ -36,6 +37,16 @@ function scoreFromLives(lives: number): number {
 }
 function shuffleArr<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
+}
+
+// El numero clickeable ya no se dibuja encima del vidrio (tapaba la pieza) -
+// se empuja al margen libre alrededor del diagrama (arriba/abajo si la pieza
+// esta cerca del borde superior/inferior, izquierda/derecha en el resto), y
+// una linea lo conecta con el punto real de la pieza.
+function computeLabelRatio(xRatio: number, yRatio: number): { lx: number; ly: number } {
+  if (yRatio < 0.22) return { lx: xRatio, ly: 0.05 };
+  if (yRatio > 0.8) return { lx: xRatio, ly: 0.96 };
+  return { lx: xRatio < 0.5 ? 0.07 : 0.93, ly: yRatio };
 }
 
 /* =========================================================
@@ -626,14 +637,38 @@ export default function NivelVisual4() {
           />
 
 
+          {imageOffset.rendW > 0 && (
+            <Svg
+              width={imageOffset.offX * 2 + imageOffset.rendW}
+              height={imageOffset.offY * 2 + imageOffset.rendH}
+              style={styles.hotspotLines}
+              pointerEvents="none"
+            >
+              {currentSub.hotspots.map((hotspot) => {
+                const px = imageOffset.offX + hotspot.xRatio * imageOffset.rendW;
+                const py = imageOffset.offY + hotspot.yRatio * imageOffset.rendH;
+                const { lx, ly } = computeLabelRatio(hotspot.xRatio, hotspot.yRatio);
+                const lpx = imageOffset.offX + lx * imageOffset.rendW;
+                const lpy = imageOffset.offY + ly * imageOffset.rendH;
+                return (
+                  <React.Fragment key={`line-${hotspot.id}`}>
+                    <Line x1={lpx} y1={lpy} x2={px} y2={py} stroke="#0F1B4C" strokeWidth={2} />
+                    <Circle cx={px} cy={py} r={4} fill="#0F1B4C" />
+                  </React.Fragment>
+                );
+              })}
+            </Svg>
+          )}
+
           {imageOffset.rendW > 0 && currentSub.hotspots.map((hotspot) => {
-            const px = imageOffset.offX + hotspot.xRatio * imageOffset.rendW;
-            const py = imageOffset.offY + hotspot.yRatio * imageOffset.rendH;
+            const { lx, ly } = computeLabelRatio(hotspot.xRatio, hotspot.yRatio);
+            const lpx = imageOffset.offX + lx * imageOffset.rendW;
+            const lpy = imageOffset.offY + ly * imageOffset.rendH;
             return (
               <TouchableOpacity key={hotspot.id}
                 style={[styles.hotspotBtn, {
-                  left: px - 18,
-                  top:  py - 18,
+                  left: lpx - 18,
+                  top:  lpy - 18,
                   backgroundColor: correct[hotspot.id]===true ? "rgba(88,174,115,0.55)" : "rgba(78,159,176,0.55)",
                 }]}
                 onPress={() => openHotspot(hotspot)} activeOpacity={0.8}
@@ -645,12 +680,13 @@ export default function NivelVisual4() {
 
           {imageOffset.rendW > 0 && currentSub.hotspots.map((hotspot) => {
             if (correct[hotspot.id] !== true) return null;
-            const px = imageOffset.offX + hotspot.xRatio * imageOffset.rendW;
-            const py = imageOffset.offY + hotspot.yRatio * imageOffset.rendH;
-            const rightFromEdge = imageOffset.rendW - (px - imageOffset.offX) + 18 + 8;
+            const { lx, ly } = computeLabelRatio(hotspot.xRatio, hotspot.yRatio);
+            const lpx = imageOffset.offX + lx * imageOffset.rendW;
+            const lpy = imageOffset.offY + ly * imageOffset.rendH;
+            const rightFromEdge = imageOffset.rendW - (lpx - imageOffset.offX) + 18 + 8;
             const labelStyle = hotspot.labelLeft
-              ? { right: rightFromEdge, top: py - 14 }
-              : { left: px + 18 + 8,   top: py - 14 };
+              ? { right: rightFromEdge, top: lpy - 14 }
+              : { left: lpx + 18 + 8,   top: lpy - 14 };
             return (
               <View key={`label-${hotspot.id}`} style={[styles.answerLabel, labelStyle]}>
                 <Text style={styles.answerLabelText}>{hotspot.correct.label}</Text>
@@ -751,6 +787,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   subImage: { width:"100%", height:"100%", borderRadius:18 },
+  hotspotLines: { position:"absolute", top:0, left:0, zIndex:9 },
   hotspotBtn: {
     position:"absolute", width:36, height:36, borderRadius:18,
     justifyContent:"center", alignItems:"center",
