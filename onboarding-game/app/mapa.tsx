@@ -13,6 +13,8 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_BASE_URL } from "./config";
 
+const botonVolver = require("../assets/botonmapa.png");
+
 // 🔗 API (Node + Express + SQL Server)
 const API_URL = API_BASE_URL;
 
@@ -126,18 +128,6 @@ export default function MapaScreen() {
         return;
       }
 
-      // Primero desbloquear todas las islas si el usuario tiene algún resultado de evaluación
-      try {
-        const unlockRes = await fetch(`${API_URL}/api/islas/${usuarioKey}/avanzar`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nuevaIsla: 9 }),
-        });
-        console.log("🔓 Desbloqueo de islas al cargar mapa:", unlockRes.ok);
-      } catch (e) {
-        console.log("⚠️ Error en desbloqueo:", e);
-      }
-
       const res = await fetch(`${API_URL}/api/islas/${usuarioKey}`);
       const data = await res.json();
       console.log("🔓 Estado de islas desde BD:", data);
@@ -150,8 +140,11 @@ export default function MapaScreen() {
 
       // ✅ Cargar porcentajes — isla 4 (Procesos) usa nivelKey 20
       const newPorcentajes: Record<number, number> = {};
+      // Isla 9 (Evaluacion Final) es standalone, no sigue la formula
+      // (islaKey-1)*5+5 de las islas 1-8 - su NIVELES_KEY real en el
+      // catalogo es 41, no 45 (confirmado contra dbo.Onboarding_Niveles).
       const nivelesEvaluacion: Record<number, number> = {
-        1: 5, 2: 10, 3: 15, 4: 20, 5: 25, 6: 30, 7: 35, 8: 40, 9: 45,
+        1: 5, 2: 10, 3: 15, 4: 20, 5: 25, 6: 30, 7: 35, 8: 40, 9: 41,
       };
 
       for (let islaKey = 1; islaKey <= 9; islaKey++) {
@@ -208,16 +201,28 @@ export default function MapaScreen() {
   const scrollWidth = width * 2.2;
 
   return (
-    <Animated.ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      scrollEventThrottle={16}
-      onScroll={Animated.event(
-        [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-        { useNativeDriver: true }
-      )}
-      contentContainerStyle={{ width: scrollWidth }}
-    >
+    <View style={{ flex: 1, overflow: "hidden" }}>
+      <TouchableOpacity
+        style={styles.botonVolver}
+        onPress={() => router.push("/registration")}
+        activeOpacity={0.8}
+      >
+        <Image
+          source={botonVolver}
+          style={{ width: 90, height: 90, resizeMode: "contain" }}
+        />
+      </TouchableOpacity>
+
+      <Animated.ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+          { useNativeDriver: true }
+        )}
+        contentContainerStyle={{ width: scrollWidth }}
+      >
       <ImageBackground
         source={fondoMapa}
         style={[styles.background, { width: scrollWidth, height }]}
@@ -306,11 +311,18 @@ export default function MapaScreen() {
           );
         })}
       </ImageBackground>
-    </Animated.ScrollView>
+      </Animated.ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  botonVolver: {
+    position: "absolute",
+    top: 600,
+    left: 30,
+    zIndex: 20,
+  },
   background: {
     flex: 1,
     justifyContent: "center",

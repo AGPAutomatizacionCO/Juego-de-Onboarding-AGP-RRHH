@@ -310,7 +310,7 @@ export default function IntroduccionAGP() {
       const n = score ? Number(score) : null;
       setVisualScoreLocal(Number.isFinite(n as any) ? (n as number) : null);
 
-      setLecturaUnlockedLocal(lecturaUnlock === "true" || progresoNivelBD >= 2);
+      setLecturaUnlockedLocal(lecturaUnlock === "true");
 
       // Lectura
       let lecturaDone = await AsyncStorage.getItem(PROG_LECTURA_DONE_KEY);
@@ -388,7 +388,6 @@ export default function IntroduccionAGP() {
     });
   }, [
     usuarioKey,
-    progresoNivelBD,
     PROG_VISUAL_DONE_KEY,
     PROG_VISUAL_SCORE_KEY,
     PROG_LECTURA_UNLOCK_KEY,
@@ -482,7 +481,11 @@ export default function IntroduccionAGP() {
     }, [loadBDProgress])
   );
 
-  // ✅ Progreso efectivo (BD + Local)
+  // Progreso efectivo DENTRO de esta isla - basado solo en sus propios 5
+  // niveles (igual que las demas islas, ver HSE.tsx). progresoNivelBD es un
+  // contador GLOBAL entre las 9 islas (ver getEstadoIslasPorUsuario en el
+  // backend) - usarlo aqui desbloqueaba de una todos los niveles de esta
+  // isla en cuanto el usuario avanzaba en CUALQUIER otra isla.
   const progresoNivelEfectivo = useMemo(() => {
     // visualDone -> desbloquea 2
     // lecturaDone -> desbloquea 3
@@ -501,11 +504,10 @@ export default function IntroduccionAGP() {
 
     const localUnlock = lecturaUnlockedLocal ? 2 : 1;
 
-    const effective = Math.max(progresoNivelBD, localByDone, localUnlock);
-    console.log("🎯 Progreso efectivo:", { progresoNivelBD, localByDone, localUnlock, effective });
+    const effective = Math.max(localByDone, localUnlock);
+    console.log("🎯 Progreso efectivo:", { localByDone, localUnlock, effective });
     return effective;
   }, [
-    progresoNivelBD,
     visualDoneLocal,
     lecturaDoneLocal,
     recordemosDoneLocal,

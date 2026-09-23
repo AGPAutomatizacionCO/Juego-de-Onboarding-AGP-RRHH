@@ -209,11 +209,15 @@ async function ensureUsuarioKey(API_URL: string): Promise<number | null> {
 export default function NivelVisualHSE() {
   const router = useRouter();
 
-  const PROG_VISUAL_DONE_KEY = `u:0:isla${ISLA_KEY}_nivel${NIVEL_KEY}_visual_done`;
-  const PROG_VISUAL_SCORE_KEY = `u:0:0:isla${ISLA_KEY}_nivel${NIVEL_KEY}_visual_score`;
-  const PROG_LECTURA_UNLOCK_KEY = `u:0:isla${ISLA_KEY}_nivel2_lectura_unlocked`;
-
   const [usuarioKey, setUsuarioKey] = useState<number | null>(null);
+
+  // OJO: HSE.tsx (el mapa de esta isla) lee estas claves con el numero de
+  // nivel LOCAL (1-5, no la NIVELES_KEY absoluta) y con el usuarioKey real -
+  // usar otra cosa aqui hace que completar Visual nunca desbloquee Lectura.
+  const PROG_VISUAL_DONE_KEY = `u:${usuarioKey}:isla${ISLA_KEY}_nivel1_visual_done`;
+  const PROG_VISUAL_SCORE_KEY = `u:${usuarioKey}:isla${ISLA_KEY}_nivel1_visual_score`;
+  const PROG_LECTURA_UNLOCK_KEY = `u:${usuarioKey}:isla${ISLA_KEY}_nivel2_lectura_unlocked`;
+
   const [allPairs, setAllPairs] = useState<PairItem[]>([]);
   const [loading, setLoading] = useState(true);
   
