@@ -39,7 +39,7 @@ const WORDS: WordInfo[] = [
   { palabra: "REPROCESO",     concepto: "Volver a una etapa anterior para corregir un defecto recuperable." },
   { palabra: "RECHAZAR",      concepto: "Retirar el producto que no cumple con la normatividad." },
   { palabra: "OEM",           concepto: "Línea de fabricación para vehículos donde se ensamblan vidrios blindados como originales." },
-  { palabra: "RETROFIT",      concepto: "Instalación posterior en vehículos ya existentes." },
+  { palabra: "RETROFIT",      concepto: "Instalación de vidrios blindados en un vehículo que ya existe y fue fabricado sin ellos (a diferencia de OEM, que viene de fábrica)." },
   { palabra: "CERTIFICACION", concepto: "Validación formal de competencias del operario." },
   { palabra: "CALIDAD",       concepto: "Cumplimiento de estándares y requisitos técnicos." },
   { palabra: "DEFECTO",       concepto: "Imperfección detectada durante la inspección." },

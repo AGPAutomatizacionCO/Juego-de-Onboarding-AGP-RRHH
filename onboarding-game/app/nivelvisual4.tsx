@@ -169,7 +169,7 @@ function buildNombreOptions(correct: string): string[] {
   return shuffleArr([correct, ...shuffleArr(others).slice(0,2)]);
 }
 function buildEspesorOptions(correct: string): string[] {
-  const others = Object.values(ESPESORES).filter(e => e !== correct);
+  const others = Array.from(new Set(Object.values(ESPESORES))).filter(e => e !== correct);
   return shuffleArr([correct, ...shuffleArr(others).slice(0,2)]);
 }
 
