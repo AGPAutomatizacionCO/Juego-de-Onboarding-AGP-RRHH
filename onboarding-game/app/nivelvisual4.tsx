@@ -730,11 +730,9 @@ export default function NivelVisual4() {
 
       <Modal visible={modalVisible} transparent animationType="fade"
         onRequestClose={() => setModalVisible(false)}>
-        <TouchableOpacity
-          style={styles.modalBackdrop}
-          activeOpacity={1}
+        <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1}
           onPress={() => setModalVisible(false)}>
-          <View style={[styles.modalBox, activeHotspot?.labelLeft && styles.modalBoxLeft]}>
+          <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Punto {activeHotspot?.number} — ¿Qué parte es?</Text>
             {activeHotspot?.options.map((opt,i) => (
               <TouchableOpacity key={i} style={styles.optionBtn}
@@ -862,7 +860,6 @@ const styles = StyleSheet.create({
 
   /* Modal */
   modalBackdrop: { flex:1, backgroundColor:"rgba(0,0,0,0.5)", justifyContent:"center", alignItems:"center" },
-  modalBoxLeft: { alignSelf:"flex-start", marginLeft:24 },
   modalBox: {
     width:"60%", backgroundColor:"#fff", borderRadius:20,
     paddingVertical:24, paddingHorizontal:20, alignItems:"stretch",
