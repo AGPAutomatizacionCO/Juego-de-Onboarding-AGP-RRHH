@@ -100,7 +100,7 @@ function prepareHotspots(hs: Hotspot[]): Hotspot[] {
 
 const SUB1: Hotspot[] = [
   { id:"h0",  number:0,  xRatio:0.502, yRatio:0.100, correct:{label:"Parabrisas",                   siglas:"PBS"}, options:[] },
-  { id:"h19", number:19, xRatio:0.145, yRatio:0.220, correct:{label:"Ventilete Delantero Izquierdo", siglas:"VDI"}, options:[], labelLeft:true },
+  { id:"h19", number:19, xRatio:0.175, yRatio:0.242, correct:{label:"Ventilete Delantero Izquierdo", siglas:"VDI"}, options:[], labelLeft:true },
   { id:"h20", number:20, xRatio:0.820, yRatio:0.212, correct:{label:"Ventilete Delantero Derecho",   siglas:"VDD"}, options:[] },
   { id:"h1",  number:1,  xRatio:0.205, yRatio:0.350, correct:{label:"Lateral Delantero Izquierdo",   siglas:"LDI"}, options:[], labelLeft:true },
   { id:"h2",  number:2,  xRatio:0.776, yRatio:0.337, correct:{label:"Lateral Delantero Derecho",     siglas:"LDD"}, options:[] },
