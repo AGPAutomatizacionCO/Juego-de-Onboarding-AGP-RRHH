@@ -286,7 +286,7 @@ const QUESTIONS_BASE: Question[] = [
   /* ═════════ MÓDULO 3 — Manipulación de cristal UMA 1 y 2 ═════════ */
   {
     id: 20, type: "single", modulo: MOD3,
-    text: "Para poder manipular y almacenar las piezas, se debe realizar un previo matado del filo en todas las piezas que llevan mecanizado. La anterior afirmación es:",
+    text: "Para poder manipular y almacenar las piezas, se debe realizar un previo matado del filo en todas las piezas que no llevan mecanizado. La anterior afirmación es:",
     options: [
       { key: "a", label: "FALSO" },
       { key: "b", label: "VERDADERO" },
