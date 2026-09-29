@@ -46,7 +46,10 @@ function shuffleArr<T>(arr: T[]): T[] {
 function computeLabelRatio(xRatio: number, yRatio: number): { lx: number; ly: number } {
   if (yRatio < 0.22) return { lx: xRatio, ly: 0.05 };
   if (yRatio > 0.8) return { lx: xRatio, ly: 0.96 };
-  return { lx: xRatio < 0.5 ? 0.07 : 0.93, ly: yRatio };
+  // Piezas centradas (ej. Sun Roof): no hay borde izquierdo/derecho cerca,
+  // el numero se queda sobre su propio punto en vez de irse al margen.
+  if (xRatio > 0.3 && xRatio < 0.7) return { lx: xRatio, ly: yRatio };
+  return { lx: xRatio < 0.5 ? 0.10 : 0.90, ly: yRatio };
 }
 
 /* =========================================================
@@ -652,8 +655,8 @@ export default function NivelVisual4() {
                 const lpy = imageOffset.offY + ly * imageOffset.rendH;
                 return (
                   <React.Fragment key={`line-${hotspot.id}`}>
-                    <Line x1={lpx} y1={lpy} x2={px} y2={py} stroke="#0F1B4C" strokeWidth={2} />
-                    <Circle cx={px} cy={py} r={4} fill="#0F1B4C" />
+                    <Line x1={lpx} y1={lpy} x2={px} y2={py} stroke="#8FC5CF" strokeWidth={2} />
+                    <Circle cx={px} cy={py} r={4} fill="#8FC5CF" />
                   </React.Fragment>
                 );
               })}
@@ -715,7 +718,9 @@ export default function NivelVisual4() {
 
       <Modal visible={modalVisible} transparent animationType="fade"
         onRequestClose={() => setModalVisible(false)}>
-        <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1}
+        <TouchableOpacity
+          style={[styles.modalBackdrop, activeHotspot?.labelLeft && styles.modalBackdropLeft]}
+          activeOpacity={1}
           onPress={() => setModalVisible(false)}>
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Punto {activeHotspot?.number} — ¿Qué parte es?</Text>
@@ -845,6 +850,7 @@ const styles = StyleSheet.create({
 
   /* Modal */
   modalBackdrop: { flex:1, backgroundColor:"rgba(0,0,0,0.5)", justifyContent:"center", alignItems:"center" },
+  modalBackdropLeft: { alignItems:"flex-start", paddingLeft:24 },
   modalBox: {
     width:"60%", backgroundColor:"#fff", borderRadius:20,
     paddingVertical:24, paddingHorizontal:20, alignItems:"stretch",
