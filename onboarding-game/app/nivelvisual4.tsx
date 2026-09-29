@@ -301,17 +301,27 @@ export default function NivelVisual4() {
   }, [mod2Screen, currentModule]);
 
   /* ── Offset real de imagen con resizeMode contain ── */
+  // En web el onLoad llega sin tamaño (react-native-web lo dispara tras un
+  // decode asincrono y nativeEvent.target ya es null), asi que se toma del
+  // propio recurso: en web es {uri,width,height}; en nativo, resolveAssetSource.
+  const sourceSize = useMemo(() => {
+    const img: any = currentSub.image;
+    const src = typeof img === "number" ? (Image as any).resolveAssetSource?.(img) : img;
+    return { width: src?.width ?? 0, height: src?.height ?? 0 };
+  }, [currentSub]);
+
   const imageOffset = useMemo(() => {
-    if (!naturalSize.width || !naturalSize.height || !imgLayout.width || !imgLayout.height) {
+    const nat = naturalSize.width && naturalSize.height ? naturalSize : sourceSize;
+    if (!nat.width || !nat.height || !imgLayout.width || !imgLayout.height) {
       return { offX:0, offY:0, rendW:imgLayout.width, rendH:imgLayout.height };
     }
-    const scale = Math.min(imgLayout.width / naturalSize.width, imgLayout.height / naturalSize.height);
-    const rendW = naturalSize.width  * scale;
-    const rendH = naturalSize.height * scale;
+    const scale = Math.min(imgLayout.width / nat.width, imgLayout.height / nat.height);
+    const rendW = nat.width  * scale;
+    const rendH = nat.height * scale;
     const offX  = (imgLayout.width  - rendW) / 2;
     const offY  = (imgLayout.height - rendH) / 2;
     return { offX, offY, rendW, rendH };
-  }, [naturalSize, imgLayout]);
+  }, [naturalSize, sourceSize, imgLayout]);
 
   /* ── Módulo 1 lógica ── */
   const openHotspot = (h: Hotspot) => {
@@ -686,7 +696,9 @@ export default function NivelVisual4() {
             const { lx, ly } = computeLabelRatio(hotspot.xRatio, hotspot.yRatio);
             const lpx = imageOffset.offX + lx * imageOffset.rendW;
             const lpy = imageOffset.offY + ly * imageOffset.rendH;
-            const rightFromEdge = imageOffset.rendW - (lpx - imageOffset.offX) + 18 + 8;
+            // `right` se mide desde el borde derecho del contenedor completo
+            // (offX + rendW + offX), no solo desde el borde de la imagen.
+            const rightFromEdge = imgLayout.width - lpx + 18 + 8;
             const labelStyle = hotspot.labelLeft
               ? { right: rightFromEdge, top: lpy - 14 }
               : { left: lpx + 18 + 8,   top: lpy - 14 };
