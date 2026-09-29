@@ -101,13 +101,13 @@ function prepareHotspots(hs: Hotspot[]): Hotspot[] {
 const SUB1: Hotspot[] = [
   { id:"h0",  number:0,  xRatio:0.502, yRatio:0.100, correct:{label:"Parabrisas",                   siglas:"PBS"}, options:[] },
   { id:"h19", number:19, xRatio:0.145, yRatio:0.220, correct:{label:"Ventilete Delantero Izquierdo", siglas:"VDI"}, options:[], labelLeft:true },
-  { id:"h20", number:20, xRatio:0.855, yRatio:0.220, correct:{label:"Ventilete Delantero Derecho",   siglas:"VDD"}, options:[] },
+  { id:"h20", number:20, xRatio:0.820, yRatio:0.212, correct:{label:"Ventilete Delantero Derecho",   siglas:"VDD"}, options:[] },
   { id:"h1",  number:1,  xRatio:0.205, yRatio:0.350, correct:{label:"Lateral Delantero Izquierdo",   siglas:"LDI"}, options:[], labelLeft:true },
-  { id:"h2",  number:2,  xRatio:0.795, yRatio:0.350, correct:{label:"Lateral Delantero Derecho",     siglas:"LDD"}, options:[] },
+  { id:"h2",  number:2,  xRatio:0.776, yRatio:0.337, correct:{label:"Lateral Delantero Derecho",     siglas:"LDD"}, options:[] },
   { id:"h3",  number:3,  xRatio:0.195, yRatio:0.520, correct:{label:"Lateral Trasero Izquierdo",     siglas:"LTI"}, options:[], labelLeft:true },
-  { id:"h4",  number:4,  xRatio:0.805, yRatio:0.520, correct:{label:"Lateral Trasero Derecho",       siglas:"LTD"}, options:[] },
-  { id:"h5",  number:5,  xRatio:0.115, yRatio:0.660, correct:{label:"Ventilete Izquierdo",           siglas:"VTI"}, options:[], labelLeft:true },
-  { id:"h6",  number:6,  xRatio:0.885, yRatio:0.660, correct:{label:"Ventilete Derecho",             siglas:"VTD"}, options:[] },
+  { id:"h4",  number:4,  xRatio:0.822, yRatio:0.539, correct:{label:"Lateral Trasero Derecho",       siglas:"LTD"}, options:[] },
+  { id:"h5",  number:5,  xRatio:0.150, yRatio:0.653, correct:{label:"Ventilete Izquierdo",           siglas:"VTI"}, options:[], labelLeft:true },
+  { id:"h6",  number:6,  xRatio:0.848, yRatio:0.665, correct:{label:"Ventilete Derecho",             siglas:"VTD"}, options:[] },
   { id:"h7",  number:7,  xRatio:0.174, yRatio:0.783, correct:{label:"Cabina Trasera Izquierda",      siglas:"QTI"}, options:[], labelLeft:true },
   { id:"h8",  number:8,  xRatio:0.827, yRatio:0.783, correct:{label:"Cabina Trasera Derecha",        siglas:"QTD"}, options:[] },
   { id:"h9",  number:9,  xRatio:0.496, yRatio:0.900, correct:{label:"Posterior",                     siglas:"POS"}, options:[] },
@@ -719,10 +719,10 @@ export default function NivelVisual4() {
       <Modal visible={modalVisible} transparent animationType="fade"
         onRequestClose={() => setModalVisible(false)}>
         <TouchableOpacity
-          style={[styles.modalBackdrop, activeHotspot?.labelLeft && styles.modalBackdropLeft]}
+          style={styles.modalBackdrop}
           activeOpacity={1}
           onPress={() => setModalVisible(false)}>
-          <View style={styles.modalBox}>
+          <View style={[styles.modalBox, activeHotspot?.labelLeft && styles.modalBoxLeft]}>
             <Text style={styles.modalTitle}>Punto {activeHotspot?.number} — ¿Qué parte es?</Text>
             {activeHotspot?.options.map((opt,i) => (
               <TouchableOpacity key={i} style={styles.optionBtn}
@@ -850,7 +850,7 @@ const styles = StyleSheet.create({
 
   /* Modal */
   modalBackdrop: { flex:1, backgroundColor:"rgba(0,0,0,0.5)", justifyContent:"center", alignItems:"center" },
-  modalBackdropLeft: { alignItems:"flex-start", paddingLeft:24 },
+  modalBoxLeft: { alignSelf:"flex-start", marginLeft:24 },
   modalBox: {
     width:"60%", backgroundColor:"#fff", borderRadius:20,
     paddingVertical:24, paddingHorizontal:20, alignItems:"stretch",
