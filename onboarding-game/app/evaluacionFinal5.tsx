@@ -104,9 +104,9 @@ const QUESTIONS_BASE: Question[] = [
     id: 3, type: "single",
     text: "Encuentras una raya en un vidrio que es sensible a la uña. ¿Cuál es la decisión correcta según la norma Retrofit?",
     options: [
-      { key: "a", label: "Aprobarla si mide menos de 40 mm en Zona 1." },
+      { key: "a", label: "Aprobarla si mide menos de 40 mm en Zona A." },
       { key: "b", label: "Rechazarla: las rayas sensibles a la uña NO SE PERMITEN en ninguna zona." },
-      { key: "c", label: "Aprobarla si está ubicada en la Zona 3 (Banda Negra)." },
+      { key: "c", label: "Aprobarla si está ubicada en la Zona C (Banda Negra)." },
       { key: "d", label: "Reprocesarla y volver a inspeccionarla sin registrar el hallazgo." },
     ],
     correct: "b",
