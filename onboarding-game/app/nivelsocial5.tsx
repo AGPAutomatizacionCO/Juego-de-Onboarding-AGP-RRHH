@@ -77,17 +77,17 @@ const casosBase: CasoBase[] = [
       "Eres inspector de calidad en el turno de la mañana. Te llega un parabrisas del proceso de serigrafía. Al revisarlo con luz de día, notas una mancha blanca visible en la banda negra. Tu supervisor te pregunta qué haces con esa pieza. ¿Qué decides?",
     opciones: [
       "La apruebo, la mancha está en la banda negra y no afecta la visibilidad del conductor.",
-      "La rechazo: en Zona 3 no se aceptan manchas visibles a la luz del día en la banda negra.",
+      "La rechazo: en Zona C no se aceptan manchas visibles a la luz del día en la banda negra.",
       "La dejo pasar y lo reporto al final del turno.",
     ],
     correctaIdx: 1,
     explicacion:
-      "La norma es clara: en Zona 3 (Banda Negra) NO SE ACEPTAN manchas visibles a la luz del día. No importa dónde esté ubicada, si es visible debe rechazarse. Nunca se deja pasar un defecto para reportarlo después.",
+      "La norma es clara: en Zona C (Banda Negra) NO SE ACEPTAN manchas visibles a la luz del día. No importa dónde esté ubicada, si es visible debe rechazarse. Nunca se deja pasar un defecto para reportarlo después.",
   },
   {
     id: 2,
     pregunta:
-      "Estás en línea de inspección final. Recibes un lateral delantero y al pasarle la uña encuentras una raya que se siente claramente. Está ubicada en la Zona 1. ¿Qué haces?",
+      "Estás en línea de inspección final. Recibes un lateral delantero y al pasarle la uña encuentras una raya que se siente claramente. Está ubicada en la Zona A. ¿Qué haces?",
     opciones: [
       "La apruebo si mide menos de 40 mm.",
       "La reproceso y vuelvo a inspeccionar.",
@@ -100,7 +100,7 @@ const casosBase: CasoBase[] = [
   {
     id: 3,
     pregunta:
-      "Eres inspector y recibes un posterior del proceso de autoclave. Al medirlo encuentras 3 burbujas de 0,6 mm en Zona 2, cada una separada más de 100 mm entre sí. ¿Qué decides?",
+      "Eres inspector y recibes un posterior del proceso de autoclave. Al medirlo encuentras 3 burbujas de 0,6 mm en Zona B, cada una separada más de 100 mm entre sí. ¿Qué decides?",
     opciones: [
       "La rechazo porque hay más de 2 defectos en la misma pieza.",
       "La apruebo: cada burbuja cumple tamaño <= 0,8 mm y distancia > 100 mm entre sí.",
@@ -108,20 +108,20 @@ const casosBase: CasoBase[] = [
     ],
     correctaIdx: 1,
     explicacion:
-      "En Zona 2 las burbujas se aceptan si miden <= 0,8 mm y están separadas > 100 mm. Cada burbuja de 0,6 mm cumple el tamaño y la distancia entre ellas supera los 100 mm, por lo tanto la pieza es aceptable.",
+      "En Zona B las burbujas se aceptan si miden <= 0,8 mm y están separadas > 100 mm. Cada burbuja de 0,6 mm cumple el tamaño y la distancia entre ellas supera los 100 mm, por lo tanto la pieza es aceptable.",
   },
   {
     id: 4,
     pregunta:
-      "En tu turno recibes una cabina trasera. Al inspeccionarla encuentras un quiñe de 2 mm de largo y 0,8 mm de ancho justo en la Zona 3 (Banda Negra). ¿Qué haces?",
+      "En tu turno recibes una cabina trasera. Al inspeccionarla encuentras un quiñe de 2 mm de largo y 0,8 mm de ancho justo en la Zona C (Banda Negra). ¿Qué haces?",
     opciones: [
       "La rechazo automáticamente, los quiñes nunca se aceptan en ninguna zona.",
-      "La apruebo: en Zona 3 los quiñes se aceptan si Long <= 10 mm y Ancho <= 1,5 mm.",
+      "La apruebo: en Zona C los quiñes se aceptan si Long <= 10 mm y Ancho <= 1,5 mm.",
       "La reproceso sin registrar el defecto para no generar reprocesos.",
     ],
     correctaIdx: 1,
     explicacion:
-      "En Zona 3 (Banda Negra +10%) los quiñes SÍ se aceptan siempre que Longitud <= 10 mm y Ancho <= 1,5 mm. Este quiñe de 2 mm x 0,8 mm cumple ambos criterios, así que la pieza es aprobada. Además, todo defecto debe registrarse.",
+      "En Zona C (Banda Negra +10%) los quiñes SÍ se aceptan siempre que Longitud <= 10 mm y Ancho <= 1,5 mm. Este quiñe de 2 mm x 0,8 mm cumple ambos criterios, así que la pieza es aprobada. Además, todo defecto debe registrarse.",
   },
   {
     id: 5,
@@ -139,7 +139,7 @@ const casosBase: CasoBase[] = [
   {
     id: 6,
     pregunta:
-      "Al final de tu turno encuentras una pieza con un defecto que claramente supera los criterios de Zona 1. No estás seguro si reprocesarla o derogarla y tu turno está por terminar. ¿Qué haces?",
+      "Al final de tu turno encuentras una pieza con un defecto que claramente supera los criterios de Zona A. No estás seguro si reprocesarla o derogarla y tu turno está por terminar. ¿Qué haces?",
     opciones: [
       "La apruebo para no retrasar la producción y lo reporto en el turno siguiente.",
       "La derego directamente sin consultar a nadie para no perder más tiempo.",

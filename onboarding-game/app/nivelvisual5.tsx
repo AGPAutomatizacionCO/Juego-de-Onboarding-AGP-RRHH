@@ -147,7 +147,7 @@ const ZONE_CARDS: ZoneCard[] = [
     vidrio: "Laterales Delanteros",
     question: "El defecto está en la zona visible desde el espejo retrovisor del conductor. ¿A qué zona corresponde?",
     correctZone: "A",
-    hint: "Zona 1 del lateral delantero — vista del conductor con retrovisores",
+    hint: "Zona A del lateral delantero — vista del conductor con retrovisores",
   },
   {
     id: 3,
