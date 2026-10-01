@@ -27,49 +27,16 @@ const MAX_HINTS = 4;
 const FIXED_SCORE = 100;
 
 /*
-  ═══════════════════════════════════════════════════
-  LAYOUT VERIFICADO — 0 CONFLICTOS — 5 CRUCES
-  ═══════════════════════════════════════════════════
-
-  Grid: 14 filas × 13 columnas
-
-       0  1  2  3  4  5  6  7  8  9  10 11 12
-  r0:  .  S  .  .  .  .  .  .  .  .  .  .  .
-  r1:  M  E  C  A  N  I  Z  A  D  O  .  .  .   ← 1.MECANIZADO →
-  r2:  .  R  .  .  .  .  U  .  .  .  .  .  .
-  r3:  .  I  .  .  .  .  N  .  .  .  .  .  .
-  r4:  .  G  .  .  .  .  D  .  .  .  .  .  .
-  r5:  .  R  .  .  .  .  .  .  .  .  .  .  .
-  r6:  .  A  .  .  .  .  .  E  .  .  .  .  .
-  r7:  .  F  .  .  .  .  .  N  .  .  .  .  .
-  r8:  .  I  .  .  .  .  .  S  .  .  .  .  .
-  r9:  .  A  U  T  O  C  L  A  V  E  .  .  .   ← 4.AUTOCLAVE →
-  r10: .  .  .  .  .  .  E  M  P  A  L  M  E   ← 6.EMPALME →
-  r11: .  .  .  .  .  .  .  B  .  .  .  .  .
-  r12: .  .  .  .  .  .  .  L  .  .  .  .  .
-  r13: .  .  .  .  .  .  .  E  .  .  .  .  .
-
-  PALABRAS:
-    1. MECANIZADO  horizontal  r1  c0
-    2. SERIGRAFIA  vertical    r0  c1
-    3. ZUND        vertical    r1  c6
-    4. AUTOCLAVE   horizontal  r9  c1
-    5. ENSAMBLE    vertical    r6  c7
-    6. EMPALME     horizontal  r10 c6
-
-  CRUCES (letra compartida en misma celda):
-    r1 c1  → MECANIZADO[1]=E  ↔  SERIGRAFIA[1]=E  ✓
-    r1 c6  → MECANIZADO[6]=Z  ↔  ZUND[0]=Z         ✓
-    r9 c1  → SERIGRAFIA[9]=A  ↔  AUTOCLAVE[0]=A    ✓
-    r9 c7  → AUTOCLAVE[6]=A   ↔  ENSAMBLE[3]=A     ✓
-    r10 c7 → ENSAMBLE[4]=M    ↔  EMPALME[1]=M      ✓
-
-  GRAFO DE CONECTIVIDAD (todas unidas):
-    MECANIZADO ─ SERIGRAFIA ─ AUTOCLAVE ─ ENSAMBLE ─ EMPALME
-    MECANIZADO ─ ZUND
+  Disposicion del crucigrama: 3 horizontales y 3 verticales; cada palabra se
+  cruza con al menos otras dos con la misma letra y no hay casillas pegadas que
+  formen tiras no intencionales. Numeracion por orden de lectura.
+       0 1 2 3 4 5 6 7 8 9 10 11 12
+  r0:  . . S E R I G R A F I A  .    1 SERIGRAFIA (h)  2 EMPALME (v)  3 AUTOCLAVE (v)
+  r3:  M E C A N I Z A D O . O  .    4 MECANIZADO (h)  5 ZUND (v)
+  r5:  . . . M . E N S A M B L  E    6 ENSAMBLE (h)
 */
 
-const ROWS = 14;
+const ROWS = 9;
 const COLS = 13;
 const CELL = 50;
 
@@ -101,51 +68,51 @@ type Coord = { row: number; col: number };
 const PLACEMENTS: Placement[] = [
   {
     number: 1,
-    word: "MECANIZADO",
-    clue: "Proceso donde se realiza matado de filo, perforaciones, cantos y chaflanes.",
+    word: "SERIGRAFIA",
+    clue: "Proceso en el que se estampan logos, bandas negras y degradé.",
     direction: "across",
-    row: 1,
-    col: 0,
+    row: 0,
+    col: 2,
   },
   {
     number: 2,
-    word: "SERIGRAFIA",
-    clue: "Proceso en el que se estampan logos, bandas negras y degradé.",
+    word: "EMPALME",
+    clue: "Proceso donde se aplica talco de bebé para evitar que los vidrios y la pintura se adhieran entre sí.",
     direction: "down",
     row: 0,
-    col: 1,
+    col: 3,
   },
   {
     number: 3,
-    word: "ZUND",
-    clue: "Proceso en el que se cortan diferentes plásticos, como polivinil y poliuretano.",
+    word: "AUTOCLAVE",
+    clue: "Proceso en el que, mediante presión y temperatura, se compactan los materiales para formar un solo conjunto.",
     direction: "down",
-    row: 1,
-    col: 6,
+    row: 0,
+    col: 11,
   },
   {
     number: 4,
-    word: "AUTOCLAVE",
-    clue: "Proceso en el que, mediante presión y temperatura, se compactan los materiales para formar un solo conjunto.",
+    word: "MECANIZADO",
+    clue: "Proceso donde se realiza matado de filo, perforaciones, cantos y chaflanes.",
     direction: "across",
-    row: 9,
-    col: 1,
+    row: 3,
+    col: 0,
   },
   {
     number: 5,
-    word: "ENSAMBLE",
-    clue: "Proceso donde se inspeccionan y se unen los vidrios y plásticos para formar el conjunto final.",
+    word: "ZUND",
+    clue: "Proceso en el que se cortan diferentes plásticos, como polivinil y poliuretano.",
     direction: "down",
-    row: 6,
-    col: 7,
+    row: 3,
+    col: 6,
   },
   {
     number: 6,
-    word: "EMPALME",
-    clue: "Proceso donde se aplica talco de bebé para evitar que los vidrios y la pintura se adhieran entre sí.",
+    word: "ENSAMBLE",
+    clue: "Proceso donde se inspeccionan y se unen los vidrios y plásticos para formar el conjunto final.",
     direction: "across",
-    row: 10,
-    col: 6,
+    row: 5,
+    col: 5,
   },
 ];
 

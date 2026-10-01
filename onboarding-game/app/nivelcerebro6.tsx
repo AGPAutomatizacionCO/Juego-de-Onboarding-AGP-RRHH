@@ -28,15 +28,16 @@ const MAX_HINTS   = 4;
 const FIXED_SCORE = 100;
 
 /*
-  Coordenadas verificadas sin conflictos de letras (ver herramienta de verificación
-  en el historial de cambios). MICROMETRO y METROLOGIA comparten intencionalmente
-  su celda de inicio (ambas empiezan con "M"). FLEXOMETRO y ESPESOR no cruzan
-  ninguna otra palabra — se movieron para evitar cruces accidentales con letras
-  distintas en la misma celda, que hacían esas palabras imposibles de completar.
+  Disposicion del crucigrama (fila 15): 3 horizontales y 3 verticales, las 6
+  palabras se cruzan con la misma letra en cada cruce y no hay casillas pegadas
+  que formen tiras no intencionales. Numeracion por orden de lectura. Cruces:
+    CONTROL    (vertical) con VACUOMETRO y FLEXOMETRO
+    MICROMETRO (vertical) con VACUOMETRO, FLEXOMETRO y METROLOGIA
+    ESPESOR    (vertical) con FLEXOMETRO y METROLOGIA
 */
 
 const ROWS = 12;
-const COLS = 14;
+const COLS = 12;
 const CELL = 50;
 
 type Direction = "across" | "down";
@@ -47,20 +48,20 @@ type Coord     = { row: number; col: number };
 const PLACEMENTS: Placement[] = [
   {
     number: 1,
-    word: "MICROMETRO",
-    clue: "Instrumento que mide espesores con alta precisión. Se usa para verificar el espesor de los lites.",
-    direction: "across",
-    row: 1,
-    col: 1,
+    word: "CONTROL",
+    clue: "Sistema que certifica que los instrumentos de medición están calibrados y aptos para ser usados.",
+    direction: "down",
+    row: 0,
+    col: 9,
   },
 
   {
     number: 2,
-    word: "FLEXOMETRO",
-    clue: "Instrumento adecuado para realizar mediciones superiores a 300 mm en planta.",
+    word: "MICROMETRO",
+    clue: "Instrumento que mide espesores con alta precisión. Se usa para verificar el espesor de los lites.",
     direction: "down",
-    row: 0,
-    col: 12,
+    row: 1,
+    col: 4,
   },
 
   {
@@ -68,35 +69,35 @@ const PLACEMENTS: Placement[] = [
     word: "VACUOMETRO",
     clue: "Instrumento que mide el nivel de vacío en una pieza. En embolsado debe marcar aprox. -20 InHg.",
     direction: "across",
-    row: 10,
-    col: 0,
+    row: 3,
+    col: 2,
   },
 
   {
     number: 4,
-    word: "METROLOGIA",
-    clue: "Ciencia que estudia las mediciones, sus métodos y la exactitud de los instrumentos utilizados en planta.",
-    direction: "down",
-    row: 1,
-    col: 1,
+    word: "FLEXOMETRO",
+    clue: "Instrumento adecuado para realizar mediciones superiores a 300 mm en planta.",
+    direction: "across",
+    row: 5,
+    col: 0,
   },
 
   {
     number: 5,
-    word: "CONTROL",
-    clue: "Sistema que certifica que los instrumentos de medición están calibrados y aptos para ser usados.",
-    direction: "down",
-    row: 0,
-    col: 11,
-  },
-
-  {
-    number: 6,
     word: "ESPESOR",
     clue: "Dimensión de un material medida de una cara a otra. Se verifica con el micrómetro en los lites.",
     direction: "down",
     row: 5,
-    col: 13,
+    col: 6,
+  },
+
+  {
+    number: 6,
+    word: "METROLOGIA",
+    clue: "Ciencia que estudia las mediciones, sus métodos y la exactitud de los instrumentos utilizados en planta.",
+    direction: "across",
+    row: 10,
+    col: 0,
   },
 ];
 /* =========================================================

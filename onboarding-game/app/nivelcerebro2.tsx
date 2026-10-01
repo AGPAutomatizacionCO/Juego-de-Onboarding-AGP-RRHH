@@ -25,8 +25,8 @@ const API_URL = API_BASE_URL;
 const NIVEL_KEY_API = 8; // Recordemos HSE en BD
 const ISLA_KEY = 2;
 const MAX_HINTS = 4;
-const ROWS = 10;
-const COLS = 11;
+const ROWS = 8;
+const COLS = 10;
 const CELL = 50;
 const FIXED_SCORE = 100;
 
@@ -57,7 +57,8 @@ type Coord = {
 
 /* =========================
    ✅ PALABRAS DEL CRUCIGRAMA
-   3 HORIZONTALES + 3 VERTICALES
+   3 HORIZONTALES + 3 VERTICALES, todas conectadas y sin casillas pegadas
+   que formen tiras no intencionales. Numeracion por orden de lectura.
    ========================= */
 const PLACEMENTS: Placement[] = [
   {
@@ -66,47 +67,47 @@ const PLACEMENTS: Placement[] = [
     clue: "Línea de fabricación donde el blindaje se instala después de que el vehículo sale del concesionario.",
     direction: "down",
     row: 0,
-    col: 9,
+    col: 6,
   },
   {
     number: 2,
-    word: "DEFENSE",
-    clue: "Línea de negocio de piezas planas enfocada soluciones militares y navales.",
-    direction: "across",
-    row: 1,
-    col: 3,
-  },
-  {
-    number: 3,
     word: "CALIDAD",
     clue: "Cumplimiento de los requisitos y estándares del producto.",
     direction: "down",
-    row: 2,
-    col: 5,
+    row: 0,
+    col: 9,
+  },
+  {
+    number: 3,
+    word: "DEFENSE",
+    clue: "Línea de negocio de piezas planas enfocada soluciones militares y navales.",
+    direction: "down",
+    row: 1,
+    col: 1,
   },
   {
     number: 4,
     word: "SECURITY",
     clue: "Línea de negocio enfocada en la seguridad y protección de automóviles.",
     direction: "across",
-    row: 5,
+    row: 2,
     col: 0,
   },
   {
     number: 5,
-    word: "YIELD",
-    clue: "Cantidad de materia prima que sí termina convertida en producto vendido al cliente.",
+    word: "OEM",
+    clue: "Línea de fabricación donde el vehículo ya sale con el vidrio blindado incluido desde su producción.",
     direction: "across",
-    row: 7,
+    row: 4,
     col: 0,
   },
   {
     number: 6,
-    word: "OEM",
-    clue: "Línea de fabricación donde el vehículo ya sale con el vidrio blindado incluido desde su producción.",
-    direction: "down",
+    word: "YIELD",
+    clue: "Cantidad de materia prima que sí termina convertida en producto vendido al cliente.",
+    direction: "across",
     row: 6,
-    col: 2,
+    col: 5,
   },
 ];
 
