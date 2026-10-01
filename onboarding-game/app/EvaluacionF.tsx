@@ -297,7 +297,7 @@ const QUESTIONS_BASE: Question[] = [
     options: [
       { key: "a", label: "Vidrios" },
       { key: "b", label: "Vidrios, Polímeros y Policarbonatos" },
-      { key: "c", label: "Vidrios y plásticos" },
+      { key: "c", label: "Vidrios, plásticos y caucho" },
     ],
     correct: "b",
   },
