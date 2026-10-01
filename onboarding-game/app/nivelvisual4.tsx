@@ -160,7 +160,7 @@ type GlassCard = {
 const ESPESORES: Record<string, string> = {
   "Sodalime":         "3 mm, 4 mm, 5 mm, 6 mm, 8 mm, 9 mm, 10 mm, 12 mm, 15 mm, 19 mm",
   "White":            "6 mm, 8 mm, 10 mm, 12 mm",
-  "Alluminum (Boro)": "5 mm, 6,5 mm, 8 mm, 10 m",
+  "Alluminum (Boro)": "5 mm, 6,5 mm, 8 mm, 10 mm",
   "Gris Dark":        "5 mm, 6 mm, 8 mm",
   "Gris Light":       "6 mm, 8 mm, 10 mm, 12 mm",
 };
