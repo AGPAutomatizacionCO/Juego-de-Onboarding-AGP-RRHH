@@ -70,11 +70,11 @@ const SUBMODULOS_SECUENCIA: SecuenciaSub[] = [
     id: "blin_gra",
     titulo: "Manipulación Vidrio Blindado – Piezas Grandes",
     imagenes: [
-      require("../assets/manipulacion/blin_gra_1.jpg"),
-      require("../assets/manipulacion/blin_gra_2.jpg"),
-      require("../assets/manipulacion/blin_gra_3.jpg"),
-      require("../assets/manipulacion/blin_gra_4.jpg"),
-      require("../assets/manipulacion/blin_gra_5.jpg"),
+      require("../assets/manipulacion/blin_gra_1.png"),
+      require("../assets/manipulacion/blin_gra_2.png"),
+      require("../assets/manipulacion/blin_gra_3.png"),
+      require("../assets/manipulacion/blin_gra_4.png"),
+      require("../assets/manipulacion/blin_gra_5.png"),
     ],
   },
   {
