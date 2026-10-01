@@ -202,8 +202,12 @@ export default function Metrologia() {
 
       const sDone  = await AsyncStorage.getItem(`u:${usuarioKey}:isla${ISLA_KEY}_nivel${NIVEL_SOCIAL_KEY}_social_done`);
       const sScore = await AsyncStorage.getItem(`u:${usuarioKey}:isla${ISLA_KEY}_nivel${NIVEL_SOCIAL_KEY}_social_score`);
-      setSocialDoneLocal(sDone === "true");
-      setSocialScoreLocal(sScore ? Number(sScore) : null);
+      // Hasta la correccion del 01/10 el nivel social guardaba su avance con la clave
+      // nivel39 (de Calidad); se sigue leyendo para no bloquear a quien ya lo termino.
+      const sDoneOld  = await AsyncStorage.getItem(`u:${usuarioKey}:isla${ISLA_KEY}_nivel39_social_done`);
+      const sScoreOld = await AsyncStorage.getItem(`u:${usuarioKey}:isla${ISLA_KEY}_nivel39_social_score`);
+      setSocialDoneLocal(sDone === "true" || sDoneOld === "true");
+      setSocialScoreLocal(sScore ? Number(sScore) : sScoreOld ? Number(sScoreOld) : null);
 
       const eDone  = await AsyncStorage.getItem(`u:${usuarioKey}:isla${ISLA_KEY}_nivel${NIVEL_EVALUACION_KEY}_evaluacion_done`);
       const eScore = await AsyncStorage.getItem(`u:${usuarioKey}:isla${ISLA_KEY}_nivel${NIVEL_EVALUACION_KEY}_evaluacion_score`);

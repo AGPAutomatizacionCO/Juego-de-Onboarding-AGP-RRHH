@@ -22,7 +22,7 @@ const RUTA_VOLVER = "/Metrologia";
 const API_URL     = API_BASE_URL;
 const ISLA_KEY        = 6;
 const NIVEL_KEY_API   = 29;
-const NIVEL_KEY_PROG  = 39;
+const NIVEL_KEY_PROG  = NIVEL_KEY_API;
 const MAX_LIVES       = 3;
 
 function scoreFromLives(lives: number): number {
@@ -152,7 +152,7 @@ export default function NivelSocialMetrologia() {
       if (uk && uk > 0) {
         setUsuarioKey(uk);
         const doneKey  = `u:${uk}:isla${ISLA_KEY}_nivel${NIVEL_KEY_PROG}_social_done`;
-        const scoreKey = `u:${uk}:isla${NIVEL_KEY_PROG}_social_score`;
+        const scoreKey = `u:${uk}:isla${ISLA_KEY}_nivel${NIVEL_KEY_PROG}_social_score`;
         const done  = await AsyncStorage.getItem(doneKey);
         const score = await AsyncStorage.getItem(scoreKey);
         if (done === "true" && score) {
@@ -286,7 +286,7 @@ export default function NivelSocialMetrologia() {
       await AsyncStorage.multiSet([
         [`u:${uk}:isla${ISLA_KEY}_nivel${NIVEL_KEY_PROG}_social_done`,  "true"],
         [`u:${uk}:isla${ISLA_KEY}_nivel${NIVEL_KEY_PROG}_social_score`, String(score)],
-        [`u:${uk}:isla${ISLA_KEY}_nivel40_evaluacion_unlocked`,         "true"],
+        [`u:${uk}:isla${ISLA_KEY}_nivel${NIVEL_KEY_PROG + 1}_evaluacion_unlocked`, "true"],
       ]);
       await fetch(`${API_URL}/api/niveles/social/${NIVEL_KEY_API}/resultado`, {
         method: "POST",
