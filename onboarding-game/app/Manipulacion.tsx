@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_BASE_URL } from "./config";
-import { intentarConsumirReintento } from "./reintentoNivel";
+import { intentarConsumirReintento, sincronizarProgresoIsla } from "./reintentoNivel";
 import { useToast } from "./Toast";
 
 async function apiJson(url: string, options?: RequestInit) {
@@ -235,6 +235,7 @@ export default function ManipulacionVidrio() {
     if (!usuarioKey) return;
     setLoadingProgreso(true);
     try {
+      await sincronizarProgresoIsla(usuarioKey, ISLA_KEY);
       await loadLocalProgress();
     } catch (e: any) {
       console.error("⚠️ Isla5: Error cargando progreso:", e?.message || e);

@@ -20,6 +20,14 @@ function nivelKeyReal(islaKey: number, nivelIdLocal: number): number {
   return (islaKey - 1) * 5 + nivelIdLocal;
 }
 
+// Numero de nivel con el que cada pantalla guarda sus marcas locales
+// (isla{I}_nivel{N}_{tipo}_done). Todas las islas usan la NIVELES_KEY real
+// (p.ej. isla7_nivel31_visual_done) salvo HSE (isla 2), cuyas pantallas y mapa
+// usan el numero local 1-5 (isla2_nivel1_visual_done).
+function nivelEnClaveLocal(islaKey: number, nivelIdLocal: number): number {
+  return islaKey === 2 ? nivelIdLocal : nivelKeyReal(islaKey, nivelIdLocal);
+}
+
 /**
  * Si el administrador habilito el reintento para este nivel, lo consume
  * (no vuelve a quedar habilitado solo), borra el resultado guardado local
@@ -59,13 +67,42 @@ export async function intentarConsumirReintento(
     if (!consumo.ok) return false;
 
     const prefijo = PREFIJOS[nivelIdLocal] || "visual";
-    const doneKey = `u:${usuarioKey}:isla${islaKey}_nivel${nivelIdLocal}_${prefijo}_done`;
-    const scoreKey = `u:${usuarioKey}:isla${islaKey}_nivel${nivelIdLocal}_${prefijo}_score`;
+    const nivelClave = nivelEnClaveLocal(islaKey, nivelIdLocal);
+    const doneKey = `u:${usuarioKey}:isla${islaKey}_nivel${nivelClave}_${prefijo}_done`;
+    const scoreKey = `u:${usuarioKey}:isla${islaKey}_nivel${nivelClave}_${prefijo}_score`;
     await AsyncStorage.multiRemove([doneKey, scoreKey]);
 
     return true;
   } catch (e) {
     console.log("intentarConsumirReintento: error", e);
     return false;
+  }
+}
+
+/**
+ * Trae del servidor los niveles que el usuario ya completo en esta isla y
+ * deja sus marcas locales (done/score), para que el mapa los muestre aunque
+ * se haya cambiado de dispositivo, reinstalado la app o borrado el
+ * almacenamiento. Solo agrega: nunca borra marcas locales, asi un nivel recien
+ * terminado no se pierde si el servidor aun no lo refleja. Sin conexion no
+ * hace nada y el mapa sigue con lo que haya en el dispositivo.
+ */
+export async function sincronizarProgresoIsla(usuarioKey: number, islaKey: number): Promise<void> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/islas/${usuarioKey}/resultados`);
+    if (!res.ok) return;
+    const resultados = (await res.json())?.resultados ?? {};
+
+    const marcas: [string, string][] = [];
+    for (let nivelIdLocal = 1; nivelIdLocal <= 5; nivelIdLocal++) {
+      const nivelKey = nivelKeyReal(islaKey, nivelIdLocal);
+      const r = resultados[`nivel_${nivelKey}`];
+      if (!r) continue;
+      const base = `u:${usuarioKey}:isla${islaKey}_nivel${nivelEnClaveLocal(islaKey, nivelIdLocal)}_${PREFIJOS[nivelIdLocal]}`;
+      marcas.push([`${base}_done`, "true"], [`${base}_score`, String(r.puntaje ?? 0)]);
+    }
+    if (marcas.length) await AsyncStorage.multiSet(marcas);
+  } catch (e) {
+    console.log("sincronizarProgresoIsla: error", e);
   }
 }
