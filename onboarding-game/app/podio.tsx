@@ -151,7 +151,11 @@ export default function PodioScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>🏆 Podio</Text>
         <Text style={styles.subtitle}>
-          {NOMBRES_ISLA[islaKey] ?? `Isla ${islaKey}`}
+          Isla: {NOMBRES_ISLA[islaKey] ?? islaKey}
+        </Text>
+        <Text style={styles.criterio}>
+          El puesto se define por el promedio de todos los niveles de la isla. En caso de
+          empate, gana quien tardó menos tiempo entre el primer y el último nivel.
         </Text>
       </View>
 
@@ -265,6 +269,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: "#AAAAAA",
     marginTop: 5,
+  },
+  criterio: {
+    fontSize: 12,
+    color: "#AAAAAA",
+    marginTop: 8,
+    textAlign: "center",
   },
   top3Container: {
     flexDirection: "row",

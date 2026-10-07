@@ -138,44 +138,23 @@ export default function MapaScreen() {
         setEstadoIslas([{ id: 1, activa: true }]);
       }
 
-      // ✅ Cargar porcentajes — isla 4 (Procesos) usa nivelKey 20
+      // ✅ Cargar porcentajes — promedio de los niveles de la isla, la misma
+      // fórmula que usa el podio (antes mostraba solo el % de la evaluación final).
       const newPorcentajes: Record<number, number> = {};
-      // Isla 9 (Evaluacion Final) es standalone, no sigue la formula
-      // (islaKey-1)*5+5 de las islas 1-8 - su NIVELES_KEY real en el
-      // catalogo es 41, no 45 (confirmado contra dbo.Onboarding_Niveles).
-      const nivelesEvaluacion: Record<number, number> = {
-        1: 5, 2: 10, 3: 15, 4: 20, 5: 25, 6: 30, 7: 35, 8: 40, 9: 41,
-      };
 
       for (let islaKey = 1; islaKey <= 9; islaKey++) {
-        const nivelKey = nivelesEvaluacion[islaKey];
-
-        // Intentar desde BD
         try {
           const pctRes = await fetch(
-            `${API_URL}/api/niveles/evaluacionFinal/resultado/${usuarioKey}/${nivelKey}`
+            `${API_URL}/api/niveles/evaluacionFinal/resultado/isla/${usuarioKey}/${islaKey}`
           );
           const pctData = await pctRes.json();
-          if (pctData?.success && pctData?.data) {
-            const pct = Number(pctData.data.puntaje ?? 0);
-            if (pct > 0) {
-              newPorcentajes[islaKey] = pct;
-              console.log(`📊 Isla ${islaKey} desde BD (nivel ${nivelKey}):`, pct);
-            }
+          const pct = Number(pctData?.data?.porcentaje ?? 0);
+          if (pctData?.success && pct > 0) {
+            newPorcentajes[islaKey] = pct;
+            console.log(`📊 Isla ${islaKey} promedio:`, pct);
           }
         } catch (e) {
           console.log(`⚠️ Error Isla ${islaKey} desde BD:`, e);
-        }
-
-        // Fallback AsyncStorage
-        if (newPorcentajes[islaKey] == null) {
-          const local = await AsyncStorage.getItem(
-            `u:${usuarioKey}:isla${islaKey}_nivel${nivelKey}_evaluacion_score`
-          );
-          if (local) {
-            newPorcentajes[islaKey] = Number(local);
-            console.log(`📊 Isla ${islaKey} desde local (nivel ${nivelKey}):`, local);
-          }
         }
       }
 
