@@ -216,6 +216,27 @@ function nivelesCompletados(p: ReporteParticipanteFila) {
   return { completados, total };
 }
 
+// Fechas del panel y del PDF en hora de Bogota, sin importar la zona horaria
+// del dispositivo. El servidor guarda y envia las fechas en UTC (Azure). Bogota
+// es UTC-5 todo el año (sin horario de verano), asi que se resta el desfase a
+// mano en vez de depender de Intl/timeZone, que no todos los motores soportan.
+function fechaBogota(valor: string | null | undefined) {
+  if (!valor) return "";
+  let d = new Date(valor);
+  if (Number.isNaN(d.getTime())) {
+    // El detalle por nivel llega como "Wed Oct 07 2026 21:56:44 GMT+0000 (...)",
+    // formato que no todos los motores saben leer.
+    const m = String(valor).match(/(\w{3}) (\d{1,2}) (\d{4}) (\d{2}):(\d{2}):(\d{2}) GMT([+-])(\d{2})(\d{2})/);
+    const MESES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    if (!m || MESES.indexOf(m[1]) < 0) return String(valor);
+    const desfase = (m[7] === "-" ? -1 : 1) * (Number(m[8]) * 60 + Number(m[9]));
+    d = new Date(Date.UTC(+m[3], MESES.indexOf(m[1]), +m[2], +m[4], +m[5], +m[6]) - desfase * 60 * 1000);
+  }
+  const b = new Date(d.getTime() - 5 * 60 * 60 * 1000);
+  const p2 = (n: number) => String(n).padStart(2, "0");
+  return `${p2(b.getUTCDate())}/${p2(b.getUTCMonth() + 1)}/${b.getUTCFullYear()} ${p2(b.getUTCHours())}:${p2(b.getUTCMinutes())}`;
+}
+
 function htmlEsc(s: string) {
   return String(s ?? "")
     .replace(/&/g, "&amp;")
@@ -224,63 +245,168 @@ function htmlEsc(s: string) {
     .replace(/"/g, "&quot;");
 }
 
-function buildReportPdfHtml(data: ReporteCompletoData) {
+// Reporte en PDF con una tarjeta por isla: dentro de cada tarjeta, una fila por
+// participante y una columna por nivel. Sirve igual para un grupo (todas sus
+// personas) que para el reporte individual (una sola fila por tarjeta). Antes
+// era una sola tabla de 46 columnas que no cabia en la hoja y se cortaba desde
+// la isla 7.
+// soloEvaluacion = "Resumen": las mismas tarjetas, pero solo con la nota de la
+// evaluacion final de cada isla (el ultimo nivel de la isla).
+function buildReportPdfHtml(data: ReporteCompletoData, tituloOverride?: string, soloEvaluacion = false) {
+  const colorDe = (v: number | null | undefined) =>
+    v == null ? "#999" : v >= 70 ? "#16A34A" : v >= 40 ? "#D97706" : "#DC2626";
+  const pct = (v: number | null | undefined) => (v != null ? `${v}%` : "—");
+  const participantes = data.participantes || [];
+  const islas = data.islas || [];
+  const promedio = (xs: number[]) => (xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : null);
+
+  // Nota de la evaluacion final de una persona en una isla (null = no la presento).
+  const evaluacionDe = (p: ReporteParticipanteFila, isla: ReporteIslaCatalogo) => {
+    const ultimo = isla.niveles?.[isla.niveles.length - 1];
+    const bloque = p.porIsla?.find((x) => x.islaKey === isla.islaKey);
+    return bloque?.niveles?.find((n) => n.nivelKey === ultimo?.nivelKey)?.puntaje ?? null;
+  };
+  // Igual que el promedio general del reporte: una evaluacion no presentada cuenta como 0.
+  const resumenEval = (p: ReporteParticipanteFila) => {
+    const notas = islas.map((is) => evaluacionDe(p, is));
+    return { prom: promedio(notas.map((v) => v ?? 0)), presentadas: notas.filter((v) => v != null).length };
+  };
+
   const cohortRows = (data.cohortes || [])
-    .map(
-      (c) =>
-        `<tr><td>${c.numeroOnboarding}</td><td>${c.participantes}</td><td>${c.promedioAvance != null ? `${c.promedioAvance}%` : "\u2014"}</td></tr>`
-    )
+    .map((c) => {
+      const prom = soloEvaluacion ? promedio(participantes.map((p) => resumenEval(p).prom ?? 0)) : c.promedioAvance;
+      return `<tr><td>${c.numeroOnboarding}</td><td class="num">${c.participantes}</td><td class="num">${pct(prom)}</td></tr>`;
+    })
+    .join("");
+  // En el resumen individual el promedio del grupo seria el de una sola persona: no se muestra esa tabla.
+  const mostrarCohortes = !soloEvaluacion || participantes.length > 1;
+
+  const resumenRows = participantes
+    .map((p) => {
+      const { completados, total } = nivelesCompletados(p);
+      const ev = resumenEval(p);
+      const prom = soloEvaluacion ? ev.prom : p.promedioGeneral;
+      const avance = soloEvaluacion ? `${ev.presentadas}/${islas.length}` : `${completados}/${total}`;
+      return `<tr><td>${htmlEsc(p.nombre)}</td><td>${htmlEsc(p.cedula)}</td><td class="num">${p.numeroOnboarding}</td><td class="num" style="color:${colorDe(prom)};font-weight:bold">${pct(prom)}</td><td class="num">${avance}</td></tr>`;
+    })
     .join("");
 
-  let thead =
-    "<tr><th>Participante</th><th>C\u00e9dula</th><th># Onb.</th><th>Prom.</th><th>Niveles</th>";
-  for (const isla of data.islas || []) {
-    for (const nv of isla.niveles || []) {
-      thead += `<th>${htmlEsc(`I${isla.islaKey} ${nv.nivelNombre}`)}</th>`;
-    }
-  }
-  thead += "</tr>";
+  const tarjetasResumen = islas
+    .map((isla) => {
+      const notas = participantes.map((p) => evaluacionDe(p, isla));
+      const promIsla = promedio(notas.filter((v): v is number => v != null));
+      const body = participantes
+        .map((p, i) => `<tr><td>${htmlEsc(p.nombre)}</td><td class="num" style="color:${colorDe(notas[i])};font-weight:bold">${pct(notas[i])}</td></tr>`)
+        .join("");
+      return `<div class="card"><div class="card-head"><span>I${isla.islaKey} · ${htmlEsc(isla.islaNombre)}</span><span class="kpi">Promedio ${pct(promIsla)}</span></div><div class="card-body"><table><thead><tr><th>Participante</th><th>Evaluación final</th></tr></thead><tbody>${body}</tbody></table></div></div>`;
+    })
+    .join("");
 
-  let body = "";
-  for (const p of data.participantes || []) {
-    const { completados, total } = nivelesCompletados(p);
-    body += "<tr>";
-    body += `<td>${htmlEsc(p.nombre)}</td><td>${htmlEsc(p.cedula)}</td><td>${p.numeroOnboarding}</td><td style="text-align:center;font-weight:bold">${p.promedioGeneral != null ? `${p.promedioGeneral}%` : "\u2014"}</td><td style="text-align:center">${completados}/${total}</td>`;
-    for (const isla of data.islas || []) {
-      const bloque = p.porIsla?.find((x) => x.islaKey === isla.islaKey);
-      for (const nv of isla.niveles || []) {
-        const cell = bloque?.niveles?.find((n) => n.nivelKey === nv.nivelKey);
-        const v = cell?.puntaje;
-        const color = v != null ? (v >= 70 ? "#16A34A" : v >= 40 ? "#D97706" : "#DC2626") : "#999";
-        body += `<td style="text-align:center;color:${color};font-weight:bold">${v != null ? `${v}%` : "\u2014"}</td>`;
+  const tarjetas = soloEvaluacion ? tarjetasResumen : islas
+    .map((isla) => {
+      const promedios = participantes
+        .map((p) => p.porIsla?.find((x) => x.islaKey === isla.islaKey)?.promedio)
+        .filter((v): v is number => v != null);
+      const promIsla = promedios.length ? Math.round(promedios.reduce((a, b) => a + b, 0) / promedios.length) : null;
+
+      let thead = "<tr><th>Participante</th>";
+      for (const nv of isla.niveles || []) thead += `<th>${htmlEsc(nv.nivelNombre)}</th>`;
+      thead += "<th>Prom. isla</th></tr>";
+
+      let body = "";
+      for (const p of participantes) {
+        const bloque = p.porIsla?.find((x) => x.islaKey === isla.islaKey);
+        body += `<tr><td>${htmlEsc(p.nombre)}</td>`;
+        for (const nv of isla.niveles || []) {
+          const v = bloque?.niveles?.find((n) => n.nivelKey === nv.nivelKey)?.puntaje;
+          body += `<td class="num" style="color:${colorDe(v)};font-weight:bold">${pct(v)}</td>`;
+        }
+        body += `<td class="num" style="color:${colorDe(bloque?.promedio)};font-weight:bold">${pct(bloque?.promedio)}</td></tr>`;
       }
-    }
-    body += "</tr>";
-  }
+
+      return `<div class="card"><div class="card-head"><span>I${isla.islaKey} · ${htmlEsc(isla.islaNombre)}</span><span class="kpi">Promedio ${pct(promIsla)}</span></div><div class="card-body"><table><thead>${thead}</thead><tbody>${body}</tbody></table></div></div>`;
+    })
+    .join("");
 
   const soloUnOnboarding = (data.cohortes || []).length === 1 ? data.cohortes[0].numeroOnboarding : null;
-  const titulo = soloUnOnboarding != null
-    ? `Reporte Onboarding AGP - Grupo #${soloUnOnboarding}`
-    : "Reporte Onboarding AGP";
+  const nombreReporte = soloEvaluacion ? "Resumen de evaluaciones finales" : "Reporte Onboarding AGP";
+  const titulo = tituloOverride ?? (soloUnOnboarding != null
+    ? `${nombreReporte} - Grupo #${soloUnOnboarding}`
+    : nombreReporte);
 
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"/><style>
-body{font-family:system-ui,sans-serif;font-size:9px;color:#111;margin:12px;}
-table{border-collapse:collapse;width:100%;margin-bottom:14px;}
-th,td{border:1px solid #333;padding:4px 5px;}
-th{background:#0F1B4C;color:#fff;font-size:8px;}
-td{font-size:8px;}
-h1{font-size:16px;color:#0F1B4C;margin-bottom:4px;}
-h2{font-size:12px;color:#0F1B4C;margin-top:14px;margin-bottom:6px;}
-p{color:#444;font-size:10px;}
-.summary-card{background:#F0F4FF;border:1px solid #C7D2FE;border-radius:6px;padding:8px;margin-bottom:6px;}
+  // Colores y tipografia de la marca AGP sGlass (guia de marca): aguamarina
+  // 8FC6D0/95CBD6 para encabezados y tarjetas, naranja FBAE40 solo para el
+  // promedio destacado, gris 4C4C4C para el texto y Plus Jakarta Sans. Los
+  // colores de puntaje (verde/naranja/rojo) se mantienen porque indican nivel.
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap"/>
+<style>
+@page{size:A4 landscape;margin:8mm;}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:10px;color:#4C4C4C;margin:12px;}
+table{border-collapse:collapse;width:100%;}
+th,td{border:1px solid #8995A6;padding:3px 5px;}
+th{background:#8FC6D0;color:#2B2B2B;font-size:9px;font-weight:700;}
+td{font-size:9px;}
+td.num{text-align:center;}
+h1{font-size:18px;font-weight:800;color:#4C4C4C;margin:0;}
+h2{font-size:12px;font-weight:700;color:#4C4C4C;margin:12px 0 6px;padding-bottom:2px;border-bottom:2px solid #8FC6D0;}
+p{color:#4C4C4C;font-size:10px;margin:0;}
+.marca{display:flex;height:4px;margin:6px 0 4px;}
+.marca span:first-child{flex:1;background:#8FC6D0;}
+.marca span:last-child{width:60px;background:#FBAE40;}
+.resumen{display:flex;gap:16px;align-items:flex-start;}
+.resumen > div{flex:1;}
+.resumen > div:first-child{flex:0 0 260px;}
+.tarjetas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+.tarjetas.tres{grid-template-columns:repeat(3,minmax(0,1fr));}
+.card{border:1px solid #95CBD6;border-radius:6px;overflow:hidden;break-inside:avoid;page-break-inside:avoid;}
+.card-head{display:flex;justify-content:space-between;align-items:center;background:#E6F4F6;padding:5px 8px;font-size:11px;font-weight:700;color:#4C4C4C;}
+.card-body{padding:6px;}
+.kpi{background:#FBAE40;color:#2B2B2B;border-radius:4px;padding:1px 8px;font-weight:800;}
 </style></head><body>
 <h1>${htmlEsc(titulo)}</h1>
-<p>Generado: ${htmlEsc(data.generado)}</p>
-<h2>Resumen por numero de onboarding</h2>
-<table><thead><tr><th># Onboarding</th><th>Participantes</th><th>Promedio avance (%)</th></tr></thead><tbody>${cohortRows}</tbody></table>
-<h2>Detalle por participante y nivel (%)</h2>
-<table><thead>${thead}</thead><tbody>${body}</tbody></table>
+<div class="marca"><span></span><span></span></div>
+<p>AGP sGlass · Generado: ${htmlEsc(fechaBogota(data.generado))} (hora de Bogotá)</p>
+<div class="resumen">
+${mostrarCohortes ? `<div><h2>Resumen por numero de onboarding</h2><table><thead><tr><th># Onboarding</th><th>Participantes</th><th>${soloEvaluacion ? "Promedio evaluaciones" : "Promedio avance"}</th></tr></thead><tbody>${cohortRows}</tbody></table></div>` : ""}
+<div><h2>Participantes</h2><table><thead><tr><th>Participante</th><th>Cédula</th><th># Onb.</th><th>${soloEvaluacion ? "Prom. evaluaciones" : "Promedio"}</th><th>${soloEvaluacion ? "Evaluaciones" : "Niveles"}</th></tr></thead><tbody>${resumenRows}</tbody></table></div>
+</div>
+<h2>${soloEvaluacion ? "Evaluación final por isla (%)" : "Detalle por isla y nivel (%)"}</h2>
+<div class="tarjetas${soloEvaluacion ? " tres" : ""}">${tarjetas}</div>
 </body></html>`;
+}
+
+// Entrega el reporte como PDF. En el celular/tablet se genera el archivo y se
+// comparte. En el navegador, expo-print ignora el html y solo imprime la
+// pantalla que se esta viendo (window.print), asi que alli se imprime el html
+// del reporte en un marco oculto: el cuadro de impresion permite "Guardar como PDF".
+async function entregarPdf(html: string) {
+  if (Platform.OS === "web") {
+    const iframe = document.createElement("iframe");
+    iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+    document.body.appendChild(iframe);
+    const win = iframe.contentWindow;
+    if (!win) throw new Error("No se pudo preparar la impresion.");
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    const imprimir = () => {
+      win.focus();
+      win.print();
+      setTimeout(() => iframe.remove(), 5000);
+    };
+    // Espera a que cargue la tipografia de la marca (con tope de 2 s si no hay internet)
+    const fuentes = (win.document as any).fonts?.ready;
+    if (fuentes) Promise.race([fuentes, new Promise((r) => setTimeout(r, 2000))]).then(() => setTimeout(imprimir, 100));
+    else setTimeout(imprimir, 300);
+    return;
+  }
+  const { uri } = await Print.printToFileAsync({ html, width: 842, height: 595 });
+  if (await Sharing.isAvailableAsync()) {
+    await Sharing.shareAsync(uri, { mimeType: "application/pdf", dialogTitle: "Compartir o guardar reporte PDF" });
+  } else {
+    Alert.alert("PDF generado", `Archivo en:\n${uri}`);
+  }
 }
 
 interface Pregunta {
@@ -320,7 +446,7 @@ function filasResumenResultadoNivel(meta: ResultadoNivelMeta | null) {
     rows.push({ k: "in", label: "Intento N.", value: String(meta.intento) });
   }
   if (meta.fecha) {
-    rows.push({ k: "fe", label: "Fecha", value: meta.fecha });
+    rows.push({ k: "fe", label: "Fecha (hora de Bogotá)", value: fechaBogota(meta.fecha) });
   }
   return rows;
 }
@@ -459,10 +585,16 @@ export default function AdminPanel() {
   // onboarding, y el reporte (pantalla + PDF) solo muestra ese grupo - no el
   // listado completo de todos los onboardings mezclados.
   const [selectedOnboardingReporte, setSelectedOnboardingReporte] = useState<number | null>(null);
-  // Buscador de la pantalla de reportes: por cedula, nombre o numero de
-  // onboarding, por coincidencia parcial - devuelve todos los participantes
-  // que calcen, no solo uno exacto.
-  const [busquedaReporte, setBusquedaReporte] = useState<string>("");
+  // Filtros del reporte: tres campos separados (nombre, cedula, # de onboarding)
+  // que se combinan con "y". Antes era una sola caja que mezclaba todo: buscar
+  // "1" traia el onboarding 1, el 10, el 11 y cualquier cedula con un 1.
+  const [filtroNombre, setFiltroNombre] = useState<string>("");
+  const [filtroCedula, setFiltroCedula] = useState<string>("");
+  const [filtroOnb, setFiltroOnb] = useState<string>("");
+  // Participante abierto en el reporte individual (null = lista o grupo).
+  const [selectedParticipanteReporte, setSelectedParticipanteReporte] = useState<number | null>(null);
+  const hayFiltros = !!(filtroNombre.trim() || filtroCedula.trim() || filtroOnb.trim());
+  const limpiarFiltros = () => { setFiltroNombre(""); setFiltroCedula(""); setFiltroOnb(""); };
 
   const normalizarTexto = (s: string) =>
     s
@@ -471,16 +603,28 @@ export default function AdminPanel() {
       .toLowerCase()
       .trim();
 
-  const resultadosBusquedaReporte = useMemo(() => {
-    const termino = normalizarTexto(busquedaReporte);
-    if (!termino) return [];
-    return (reporteCompleto?.participantes || []).filter((p) => {
-      const nombre = normalizarTexto(p.nombre || "");
-      const cedula = normalizarTexto(p.cedula || "");
-      const onboarding = String(p.numeroOnboarding ?? "");
-      return nombre.includes(termino) || cedula.includes(termino) || onboarding.includes(termino);
-    });
-  }, [reporteCompleto, busquedaReporte]);
+  // nombre: contiene (sin tildes ni mayusculas) · cedula: contiene (solo digitos)
+  // · onboarding: el numero exacto. conOnb=false lo ignora (dentro de un grupo).
+  const coincideFiltros = (p: ReporteParticipanteFila, conOnb: boolean) => {
+    const nombre = normalizarTexto(filtroNombre);
+    const cedula = filtroCedula.replace(/\D/g, "");
+    const onb = filtroOnb.replace(/\D/g, "");
+    if (nombre && !normalizarTexto(p.nombre || "").includes(nombre)) return false;
+    if (cedula && !String(p.cedula || "").replace(/\D/g, "").includes(cedula)) return false;
+    if (conOnb && onb && String(p.numeroOnboarding) !== onb) return false;
+    return true;
+  };
+
+  const participantesFiltrados = useMemo(
+    () => (reporteCompleto?.participantes || []).filter((p) => coincideFiltros(p, true)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [reporteCompleto, filtroNombre, filtroCedula, filtroOnb]
+  );
+
+  const participanteReporte = useMemo(
+    () => (reporteCompleto?.participantes || []).find((p) => p.usuarioKey === selectedParticipanteReporte) ?? null,
+    [reporteCompleto, selectedParticipanteReporte]
+  );
 
   const reporteFiltrado = useMemo<ReporteCompletoData | null>(() => {
     if (!reporteCompleto || selectedOnboardingReporte == null) return null;
@@ -490,6 +634,12 @@ export default function AdminPanel() {
       participantes: (reporteCompleto.participantes || []).filter((p) => p.numeroOnboarding === selectedOnboardingReporte),
     };
   }, [reporteCompleto, selectedOnboardingReporte]);
+
+  const participantesGrupo = useMemo(
+    () => (reporteFiltrado?.participantes || []).filter((p) => coincideFiltros(p, false)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [reporteFiltrado, filtroNombre, filtroCedula]
+  );
 
   const [loaded] = useFonts({
     "PlusJakartaSans-Regular": require("../assets/fonts/PlusJakartaSans-Regular.ttf"),
@@ -642,14 +792,15 @@ export default function AdminPanel() {
   // completar un nivel, se ve reflejado sin tener que tocar "Actualizar
   // datos" a mano.
   useEffect(() => {
-    if (!busquedaReporte.trim()) return;
+    if (!hayFiltros) return;
     const t = setTimeout(() => {
       cargarReporteCompleto();
     }, 500);
     return () => clearTimeout(t);
-  }, [busquedaReporte, cargarReporteCompleto]);
+  }, [filtroNombre, filtroCedula, filtroOnb, cargarReporteCompleto]);
 
-  const exportarReportePdf = useCallback(async () => {
+  // soloEvaluacion = boton "Resumen": solo la nota de la evaluacion final de cada isla.
+  const exportarReportePdf = useCallback(async (soloEvaluacion: boolean) => {
     if (selectedOnboardingReporte == null) {
       Alert.alert("Selecciona un onboarding", "Elige primero el numero de onboarding para el que quieres el PDF.");
       return;
@@ -660,19 +811,36 @@ export default function AdminPanel() {
     }
     setExportandoPdf(true);
     try {
-      const html = buildReportPdfHtml(reporteFiltrado);
-      const { uri } = await Print.printToFileAsync({ html, width: 842, height: 595 });
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, { mimeType: "application/pdf", dialogTitle: "Compartir o guardar reporte PDF" });
-      } else {
-        Alert.alert("PDF generado", `Archivo en:\n${uri}`);
-      }
+      await entregarPdf(buildReportPdfHtml(reporteFiltrado, undefined, soloEvaluacion));
     } catch (e: any) {
       Alert.alert("PDF", e?.message || "No se pudo generar el PDF.");
     } finally {
       setExportandoPdf(false);
     }
   }, [reporteFiltrado, selectedOnboardingReporte]);
+
+  // PDF de un solo participante: mismas tarjetas del reporte, con una sola fila.
+  const exportarReporteUsuarioPdf = useCallback(async (soloEvaluacion: boolean) => {
+    if (!reporteCompleto || !participanteReporte) {
+      Alert.alert("Sin datos", "Actualiza el reporte antes de exportar.");
+      return;
+    }
+    setExportandoPdf(true);
+    try {
+      const cohorte = (reporteCompleto.cohortes || []).filter((c) => c.numeroOnboarding === participanteReporte.numeroOnboarding);
+      await entregarPdf(
+        buildReportPdfHtml(
+          { ...reporteCompleto, cohortes: cohorte, participantes: [participanteReporte] },
+          `${soloEvaluacion ? "Resumen de evaluaciones finales" : "Reporte individual"} - ${participanteReporte.nombre} (Onboarding #${participanteReporte.numeroOnboarding})`,
+          soloEvaluacion
+        )
+      );
+    } catch (e: any) {
+      Alert.alert("PDF", e?.message || "No se pudo generar el PDF.");
+    } finally {
+      setExportandoPdf(false);
+    }
+  }, [reporteCompleto, participanteReporte]);
 
   /* ========================= LOGIN ========================= */
 
@@ -1621,14 +1789,179 @@ export default function AdminPanel() {
 
   /* ===== VISTA REPORTE ===== */
 
+  const colorPuntaje = (v: number | null) =>
+    v == null ? "#9CA3AF" : v >= 70 ? "#16A34A" : v >= 40 ? "#D97706" : "#DC2626";
+
+  const renderBarraPromedio = (valor: number | null) => (
+    <View style={styles.reporteProgressBar}>
+      <View style={[styles.reporteProgressFill, { width: `${Math.min(valor ?? 0, 100)}%` }]} />
+      <Text style={styles.reporteProgressText}>{valor != null ? `${valor}%` : "--"}</Text>
+    </View>
+  );
+
+  // Tres filtros separados; en un grupo el de onboarding no aplica.
+  const renderFiltros = (conOnb: boolean) => (
+    <View style={styles.filtrosBox}>
+      <View style={styles.filtrosRow}>
+        <View style={styles.filtroCol}>
+          <Text style={styles.filtroLabel}>Nombre</Text>
+          <TextInput
+            style={styles.filtroInput}
+            placeholder="Ej: Maria"
+            placeholderTextColor="#9CA3AF"
+            value={filtroNombre}
+            onChangeText={setFiltroNombre}
+          />
+        </View>
+        <View style={styles.filtroCol}>
+          <Text style={styles.filtroLabel}>Cedula</Text>
+          <TextInput
+            style={styles.filtroInput}
+            placeholder="Solo numeros"
+            placeholderTextColor="#9CA3AF"
+            keyboardType="number-pad"
+            value={filtroCedula}
+            onChangeText={setFiltroCedula}
+          />
+        </View>
+        {conOnb && (
+          <View style={styles.filtroCol}>
+            <Text style={styles.filtroLabel}># Onboarding</Text>
+            <TextInput
+              style={styles.filtroInput}
+              placeholder="Ej: 1"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="number-pad"
+              value={filtroOnb}
+              onChangeText={setFiltroOnb}
+            />
+          </View>
+        )}
+        <TouchableOpacity style={[styles.filtroLimpiar, !hayFiltros && { opacity: 0.4 }]} onPress={limpiarFiltros} disabled={!hayFiltros}>
+          <Text style={styles.filtroLimpiarText}>Limpiar</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const renderFilaCohorte = (c: ReporteCohorte) => (
+    <TouchableOpacity
+      key={`co-${c.numeroOnboarding}`}
+      style={styles.islaRow}
+      onPress={() => { setSelectedOnboardingReporte(c.numeroOnboarding); limpiarFiltros(); }}
+    >
+      <View style={{ flex: 1 }}>
+        <Text style={styles.islaRowText}>Onboarding #{c.numeroOnboarding}</Text>
+        <Text style={styles.reporteCardLine}>
+          {c.participantes} participante{c.participantes === 1 ? "" : "s"} · promedio {c.promedioAvance != null ? `${c.promedioAvance}%` : "--"}
+        </Text>
+      </View>
+      <View style={styles.islaRowPlusBox}>
+        <Text style={styles.islaRowPlus}>+</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  // El onboarding que coincide con el filtro "# Onboarding" (numero exacto).
+  const cohortesFiltradas = filtroOnb.replace(/\D/g, "")
+    ? (reporteCompleto?.cohortes || []).filter((c) => String(c.numeroOnboarding) === filtroOnb.replace(/\D/g, ""))
+    : [];
+
+  const renderFilaParticipante = (p: ReporteParticipanteFila, mostrarOnb: boolean) => {
+    const { completados, total } = nivelesCompletados(p);
+    return (
+      <TouchableOpacity key={`bp-${p.usuarioKey}`} style={styles.islaRow} onPress={() => setSelectedParticipanteReporte(p.usuarioKey)}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.islaRowText}>{p.nombre}</Text>
+          <Text style={styles.reporteCardLine}>
+            Cedula: {p.cedula}{mostrarOnb ? ` · Onboarding #${p.numeroOnboarding}` : ""} · Niveles: {completados}/{total}
+          </Text>
+        </View>
+        <Text style={[styles.filaPromedio, { color: colorPuntaje(p.promedioGeneral) }]}>
+          {p.promedioGeneral != null ? `${p.promedioGeneral}%` : "--"}
+        </Text>
+        <View style={styles.islaRowPlusBox}>
+          <Text style={styles.islaRowPlus}>+</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   const renderReporte = () => {
-    // Paso 1: elegir el onboarding, igual que Isla/Nivel en el Panel - antes
-    // de esto no se muestra detalle ni se puede descargar nada.
+    // Reporte individual: un participante, con todas sus islas y niveles.
+    if (participanteReporte) {
+      const p = participanteReporte;
+      const { completados, total } = nivelesCompletados(p);
+      return (
+        <View style={[styles.box, { maxHeight: "94%" }]}>
+          <TouchableOpacity style={styles.backButton} onPress={() => setSelectedParticipanteReporte(null)}>
+            <Text style={styles.backText}>Volver</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.title}>{p.nombre}</Text>
+          <Text style={styles.reporteSub}>Cedula: {p.cedula} · Onboarding #{p.numeroOnboarding}</Text>
+
+          <View style={styles.reporteActionsRow}>
+            <TouchableOpacity style={styles.reporteBtnSecondary} onPress={cargarReporteCompleto} disabled={loadingReporte}>
+              <Text style={styles.reporteBtnSecondaryText}>{loadingReporte ? "Actualizando..." : "Actualizar datos"}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.reporteBtnPrimary, exportandoPdf && { opacity: 0.45 }]}
+              onPress={() => exportarReporteUsuarioPdf(false)}
+              disabled={exportandoPdf}
+            >
+              <Text style={styles.reporteBtnPrimaryText}>{exportandoPdf ? "Generando PDF..." : "Descargar PDF"}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.reporteBtnPrimary, { marginLeft: sp(10) }, exportandoPdf && { opacity: 0.45 }]}
+              onPress={() => exportarReporteUsuarioPdf(true)}
+              disabled={exportandoPdf}
+            >
+              <Text style={styles.reporteBtnPrimaryText}>Resumen</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: sp(24) }} showsVerticalScrollIndicator>
+            <View style={styles.reporteCard}>
+              <Text style={styles.reporteCardStrong}>Avance general</Text>
+              <Text style={styles.reporteCardLine}>Niveles completados: {completados}/{total}</Text>
+              {renderBarraPromedio(p.promedioGeneral)}
+            </View>
+
+            {(p.porIsla || []).map((isla) => (
+              <View key={`ui-${p.usuarioKey}-${isla.islaKey}`} style={styles.reporteCard}>
+                <Text style={styles.reporteIslaTitle}>
+                  {isla.islaNombre} · promedio {isla.promedio != null ? `${isla.promedio}%` : "--"}
+                </Text>
+                <View style={styles.nivelesGrid}>
+                  {(isla.niveles || []).map((nv) => (
+                    <View key={`n-${nv.nivelKey}`} style={[styles.nivelChip, { borderColor: colorPuntaje(nv.puntaje) }]}>
+                      <Text style={styles.nivelChipNombre}>{nv.nivelNombre}</Text>
+                      <Text style={[styles.nivelChipPuntaje, { color: colorPuntaje(nv.puntaje) }]}>
+                        {nv.puntaje != null ? `${nv.puntaje}%` : "--"}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ))}
+
+            {reporteCompleto?.generado && (
+              <Text style={styles.reporteFoot}>Datos al {fechaBogota(reporteCompleto.generado)} (hora de Bogotá)</Text>
+            )}
+          </ScrollView>
+        </View>
+      );
+    }
+
+    // Paso 1: lista de onboardings, o de participantes si hay filtros activos.
     if (selectedOnboardingReporte == null) {
       return (
         <View style={styles.box}>
           <Text style={styles.title}>Reportes</Text>
-          <Text style={styles.reporteSub}>Selecciona el numero de onboarding para ver y descargar su reporte.</Text>
+          <Text style={styles.reporteSub}>
+            Elige un onboarding, o filtra por nombre, cedula y numero de onboarding para ver a una persona.
+          </Text>
 
           <View style={styles.reporteActionsRow}>
             <TouchableOpacity style={styles.reporteBtnSecondary} onPress={cargarReporteCompleto} disabled={loadingReporte}>
@@ -1636,89 +1969,55 @@ export default function AdminPanel() {
             </TouchableOpacity>
           </View>
 
-          {/* Buscador: por cedula, nombre o numero de onboarding, por coincidencia parcial */}
-          <View style={styles.searchRow}>
-            <Text style={styles.ccLabel}>Buscar:</Text>
-            <TextInput
-              style={styles.ccInput}
-              placeholder="Cedula, nombre o # de onboarding"
-              placeholderTextColor="#9CA3AF"
-              value={busquedaReporte}
-              onChangeText={setBusquedaReporte}
-            />
-          </View>
+          {renderFiltros(true)}
 
           {loadingReporte && !reporteCompleto ? (
             <Text style={styles.loadingText}>Cargando reporte...</Text>
           ) : !reporteCompleto || (reporteCompleto.cohortes || []).length === 0 ? (
             <Text style={styles.loadingText}>No hay datos. Comprueba la API y la base de datos.</Text>
-          ) : busquedaReporte.trim() ? (
+          ) : hayFiltros ? (
             <ScrollView style={{ marginTop: sp(8) }}>
-              {resultadosBusquedaReporte.length === 0 ? (
+              {/* Con el filtro de onboarding, primero el grupo (para entrar y descargar su PDF) y luego sus personas */}
+              {cohortesFiltradas.length > 0 && (
+                <>
+                  <Text style={styles.reporteSectionTitle}>Onboarding</Text>
+                  {cohortesFiltradas.map(renderFilaCohorte)}
+                  <Text style={styles.reporteSectionTitle}>Personas</Text>
+                </>
+              )}
+              <Text style={styles.reporteCardLine}>
+                {participantesFiltrados.length} resultado{participantesFiltrados.length === 1 ? "" : "s"}
+              </Text>
+              {participantesFiltrados.length === 0 ? (
                 <Text style={styles.loadingText}>Sin coincidencias.</Text>
               ) : (
-                resultadosBusquedaReporte.map((p) => {
-                  const { completados, total } = nivelesCompletados(p);
-                  return (
-                  <TouchableOpacity
-                    key={`bp-${p.usuarioKey}`}
-                    style={styles.islaRow}
-                    onPress={() => {
-                      setBusquedaReporte("");
-                      setSelectedOnboardingReporte(p.numeroOnboarding);
-                    }}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.islaRowText}>{p.nombre}</Text>
-                      <Text style={styles.reporteCardLine}>
-                        Cedula: {p.cedula} · Onboarding #{p.numeroOnboarding} · Niveles: {completados}/{total}
-                      </Text>
-                    </View>
-                    <View style={styles.islaRowPlusBox}>
-                      <Text style={styles.islaRowPlus}>+</Text>
-                    </View>
-                  </TouchableOpacity>
-                  );
-                })
+                participantesFiltrados.map((p) => renderFilaParticipante(p, true))
               )}
             </ScrollView>
           ) : (
             <ScrollView style={{ marginTop: sp(8) }}>
-              {reporteCompleto.cohortes.map((c) => (
-                <TouchableOpacity
-                  key={`co-${c.numeroOnboarding}`}
-                  style={styles.islaRow}
-                  onPress={() => setSelectedOnboardingReporte(c.numeroOnboarding)}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.islaRowText}>Onboarding #{c.numeroOnboarding}</Text>
-                    <Text style={styles.reporteCardLine}>
-                      {c.participantes} participante{c.participantes === 1 ? "" : "s"} · promedio {c.promedioAvance != null ? `${c.promedioAvance}%` : "--"}
-                    </Text>
-                  </View>
-                  <View style={styles.islaRowPlusBox}>
-                    <Text style={styles.islaRowPlus}>+</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
+              {reporteCompleto.cohortes.map(renderFilaCohorte)}
             </ScrollView>
           )}
         </View>
       );
     }
 
-    // Paso 2: reporte y PDF de un solo onboarding.
+    // Paso 2: un onboarding. Lista de sus participantes (filtrable) y PDF del grupo.
     const d = reporteFiltrado;
 
     return (
       <View style={[styles.box, { maxHeight: "94%" }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => setSelectedOnboardingReporte(null)}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => { setSelectedOnboardingReporte(null); limpiarFiltros(); }}
+        >
           <Text style={styles.backText}>Volver</Text>
         </TouchableOpacity>
 
         <Text style={styles.title}>Onboarding #{selectedOnboardingReporte}</Text>
         <Text style={styles.reporteSub}>
-          Avance de este grupo. Los porcentajes usan el ultimo intento registrado por nivel.
+          Toca a una persona para ver su reporte individual. Los porcentajes usan el ultimo intento registrado por nivel.
         </Text>
 
         <View style={styles.reporteActionsRow}>
@@ -1727,10 +2026,17 @@ export default function AdminPanel() {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.reporteBtnPrimary, (!d || exportandoPdf) && { opacity: 0.45 }]}
-            onPress={exportarReportePdf}
+            onPress={() => exportarReportePdf(false)}
             disabled={!d || exportandoPdf}
           >
             <Text style={styles.reporteBtnPrimaryText}>{exportandoPdf ? "Generando PDF..." : "Descargar PDF"}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.reporteBtnPrimary, { marginLeft: sp(10) }, (!d || exportandoPdf) && { opacity: 0.45 }]}
+            onPress={() => exportarReportePdf(true)}
+            disabled={!d || exportandoPdf}
+          >
+            <Text style={styles.reporteBtnPrimaryText}>Resumen</Text>
           </TouchableOpacity>
         </View>
 
@@ -1738,50 +2044,29 @@ export default function AdminPanel() {
           <Text style={styles.loadingText}>Este onboarding ya no tiene datos - actualiza o vuelve a la lista.</Text>
         ) : (
           <ScrollView style={{ flex: 1, marginTop: sp(4) }} contentContainerStyle={{ paddingBottom: sp(24) }} showsVerticalScrollIndicator>
-            {/* Resumen de este onboarding */}
             {(d.cohortes || []).map((c) => (
               <View key={`co-${c.numeroOnboarding}`} style={styles.reporteCard}>
-                <Text style={styles.reporteCardStrong}>Onboarding #{c.numeroOnboarding}</Text>
-                <Text style={styles.reporteCardLine}>Participantes: {c.participantes}</Text>
-                <Text style={styles.reporteCardLine}>Promedio avance: {c.promedioAvance != null ? `${c.promedioAvance}%` : "--"}</Text>
+                <Text style={styles.reporteCardStrong}>Participantes: {c.participantes}</Text>
+                <Text style={styles.reporteCardLine}>Promedio de avance del grupo:</Text>
+                {renderBarraPromedio(c.promedioAvance)}
               </View>
             ))}
 
-            {/* Personal */}
-            <Text style={styles.reporteSectionTitle}>Personal - participantes</Text>
+            {renderFiltros(false)}
+
+            <Text style={styles.reporteSectionTitle}>
+              Participantes{hayFiltros ? ` (${participantesGrupo.length} de ${(d.participantes || []).length})` : ""}
+            </Text>
             {(d.participantes || []).length === 0 ? (
               <Text style={styles.loadingText}>No hay usuarios registrados en este onboarding.</Text>
+            ) : participantesGrupo.length === 0 ? (
+              <Text style={styles.loadingText}>Sin coincidencias.</Text>
             ) : (
-              (d.participantes || []).map((p) => {
-                const { completados, total } = nivelesCompletados(p);
-                return (
-                <View key={`u-${p.usuarioKey}`} style={styles.reporteCard}>
-                  <Text style={styles.reporteCardStrong}>{p.nombre}</Text>
-                  <Text style={styles.reporteCardLine}>Cedula: {p.cedula} | Onboarding #{p.numeroOnboarding}</Text>
-                  <Text style={styles.reporteCardLine}>Niveles completados: {completados}/{total}</Text>
-                  <View style={styles.reporteProgressBar}>
-                    <View style={[styles.reporteProgressFill, { width: `${Math.min(p.promedioGeneral ?? 0, 100)}%` }]} />
-                    <Text style={styles.reporteProgressText}>
-                      {p.promedioGeneral != null ? `${p.promedioGeneral}%` : "--"}
-                    </Text>
-                  </View>
-                  {(p.porIsla || []).map((isla) => (
-                    <View key={`ui-${p.usuarioKey}-${isla.islaKey}`} style={styles.reporteIslaBlock}>
-                      <Text style={styles.reporteIslaTitle}>{isla.islaNombre} (prom. {isla.promedio != null ? `${isla.promedio}%` : "--"})</Text>
-                      {(isla.niveles || []).map((nv) => (
-                        <Text key={`n-${nv.nivelKey}`} style={styles.reporteNivelLine}>
-                          {nv.nivelNombre}: {nv.puntaje != null ? `${nv.puntaje}%` : "--"}
-                        </Text>
-                      ))}
-                    </View>
-                  ))}
-                </View>
-                );
-              })
+              participantesGrupo.map((p) => renderFilaParticipante(p, false))
             )}
 
             {d.generado && (
-              <Text style={styles.reporteFoot}>Datos al {new Date(d.generado).toLocaleString("es-CO")}</Text>
+              <Text style={styles.reporteFoot}>Datos al {fechaBogota(d.generado)} (hora de Bogotá)</Text>
             )}
           </ScrollView>
         )}
@@ -2131,4 +2416,22 @@ const styles = StyleSheet.create({
   reporteIslaTitle: { fontFamily: "PlusJakartaSans-Bold", fontSize: sp(13), color: "#1E3A8A", marginBottom: sp(4) },
   reporteNivelLine: { fontFamily: "PlusJakartaSans-Regular", fontSize: sp(12), color: "#4B5563", marginLeft: sp(8), marginBottom: sp(2) },
   reporteFoot: { fontFamily: "PlusJakartaSans-Regular", fontSize: sp(12), color: "#9CA3AF", textAlign: "center", marginTop: sp(14) },
+  filtrosBox: { marginTop: sp(6), marginBottom: sp(6) },
+  filtrosRow: { flexDirection: "row", alignItems: "flex-end" },
+  filtroCol: { flex: 1, marginRight: sp(8) },
+  filtroLabel: { fontFamily: "PlusJakartaSans-Bold", fontSize: sp(12), color: "#374151", marginBottom: sp(3) },
+  filtroInput: {
+    fontFamily: "PlusJakartaSans-Regular", fontSize: sp(14), paddingVertical: sp(8), paddingHorizontal: sp(10),
+    borderWidth: 1, borderColor: "#D1D5DB", borderRadius: sp(8), color: "#111", backgroundColor: "white",
+  },
+  filtroLimpiar: { paddingVertical: sp(10), paddingHorizontal: sp(14), borderRadius: sp(8), borderWidth: 2, borderColor: "#0F1B4C", backgroundColor: "white" },
+  filtroLimpiarText: { fontFamily: "PlusJakartaSans-Bold", fontSize: sp(13), color: "#0F1B4C" },
+  filaPromedio: { fontFamily: "PlusJakartaSans-Bold", fontSize: sp(16), marginRight: sp(10) },
+  nivelesGrid: { flexDirection: "row", flexWrap: "wrap", marginTop: sp(4) },
+  nivelChip: {
+    minWidth: sp(110), alignItems: "center", borderWidth: 2, borderRadius: sp(10), paddingVertical: sp(6), paddingHorizontal: sp(10),
+    marginRight: sp(8), marginBottom: sp(8), backgroundColor: "white",
+  },
+  nivelChipNombre: { fontFamily: "PlusJakartaSans-Regular", fontSize: sp(12), color: "#4B5563" },
+  nivelChipPuntaje: { fontFamily: "PlusJakartaSans-Bold", fontSize: sp(16) },
 });
