@@ -107,6 +107,10 @@ export default function RegistrationScreen() {
 
       // ⚠️ legacy de sesión:
       "usuarioKey",
+
+      // grupo que cachean los podios de isla (evaluacionFinalN); sin esto el
+      // usuario nuevo veía el podio del onboarding del usuario anterior
+      "numeroOnboarding",
     ];
     await Promise.all(keysToRemove.map((k) => AsyncStorage.removeItem(k)));
   };
