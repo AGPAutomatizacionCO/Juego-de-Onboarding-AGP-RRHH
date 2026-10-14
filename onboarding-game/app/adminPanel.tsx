@@ -245,64 +245,60 @@ function htmlEsc(s: string) {
     .replace(/"/g, "&quot;");
 }
 
-// Reporte en PDF con una tarjeta por isla: dentro de cada tarjeta, una fila por
-// participante y una columna por nivel. Sirve igual para un grupo (todas sus
-// personas) que para el reporte individual (una sola fila por tarjeta). Antes
-// era una sola tabla de 46 columnas que no cabia en la hoja y se cortaba desde
-// la isla 7.
-// soloEvaluacion = "Resumen": las mismas tarjetas, pero solo con la nota de la
-// evaluacion final de cada isla (el ultimo nivel de la isla).
-function buildReportPdfHtml(data: ReporteCompletoData, tituloOverride?: string, soloEvaluacion = false) {
+// Encabezado y estilos comunes de los PDF, con la marca AGP sGlass (guia de
+// marca): aguamarina 8FC6D0/95CBD6, azul 3894E0 para el promedio destacado,
+// gris 4C4C4C y Plus Jakarta Sans. Sin naranja: solo las notas llevan color.
+function pdfDocumento(titulo: string, generado: string, cuerpo: string, estilosExtra = "") {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap"/>
+<style>
+@page{size:A4 landscape;margin:8mm;}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:10px;color:#4C4C4C;margin:12px;}
+table{border-collapse:collapse;width:100%;}
+th,td{border:1px solid #8995A6;padding:3px 5px;}
+th{background:#8FC6D0;color:#2B2B2B;font-size:9px;font-weight:700;}
+td{font-size:9px;}
+td.num{text-align:center;}
+h1{font-size:18px;font-weight:800;color:#4C4C4C;margin:0;}
+h2{font-size:12px;font-weight:700;color:#4C4C4C;margin:12px 0 6px;padding-bottom:2px;border-bottom:2px solid #8FC6D0;}
+p{color:#4C4C4C;font-size:10px;margin:0;}
+.marca{height:4px;margin:6px 0 4px;background:#8FC6D0;}
+${estilosExtra}
+</style></head><body>
+<h1>${htmlEsc(titulo)}</h1>
+<div class="marca"></div>
+<p>AGP sGlass · Generado: ${htmlEsc(fechaBogota(generado))} (hora de Bogotá)</p>
+${cuerpo}
+</body></html>`;
+}
+
+function tituloDeGrupo(data: ReporteCompletoData, nombre: string) {
+  const solo = (data.cohortes || []).length === 1 ? data.cohortes[0].numeroOnboarding : null;
+  return solo != null ? `${nombre} - Grupo #${solo}` : nombre;
+}
+
+// "Descargar PDF": una tarjeta por isla, con una fila por participante y una
+// columna por nivel. Sirve igual para un grupo que para una sola persona.
+// Antes era una sola tabla de 46 columnas que no cabia en la hoja y se cortaba
+// desde la isla 7.
+function buildReportPdfHtml(data: ReporteCompletoData, tituloOverride?: string) {
   const colorDe = (v: number | null | undefined) =>
     v == null ? "#999" : v >= 70 ? "#16A34A" : v >= 40 ? "#D97706" : "#DC2626";
   const pct = (v: number | null | undefined) => (v != null ? `${v}%` : "—");
   const participantes = data.participantes || [];
-  const islas = data.islas || [];
-  const promedio = (xs: number[]) => (xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : null);
-
-  // Nota de la evaluacion final de una persona en una isla (null = no la presento).
-  const evaluacionDe = (p: ReporteParticipanteFila, isla: ReporteIslaCatalogo) => {
-    const ultimo = isla.niveles?.[isla.niveles.length - 1];
-    const bloque = p.porIsla?.find((x) => x.islaKey === isla.islaKey);
-    return bloque?.niveles?.find((n) => n.nivelKey === ultimo?.nivelKey)?.puntaje ?? null;
-  };
-  // Igual que el promedio general del reporte: una evaluacion no presentada cuenta como 0.
-  const resumenEval = (p: ReporteParticipanteFila) => {
-    const notas = islas.map((is) => evaluacionDe(p, is));
-    return { prom: promedio(notas.map((v) => v ?? 0)), presentadas: notas.filter((v) => v != null).length };
-  };
 
   const cohortRows = (data.cohortes || [])
-    .map((c) => {
-      const prom = soloEvaluacion ? promedio(participantes.map((p) => resumenEval(p).prom ?? 0)) : c.promedioAvance;
-      return `<tr><td>${c.numeroOnboarding}</td><td class="num">${c.participantes}</td><td class="num">${pct(prom)}</td></tr>`;
-    })
+    .map((c) => `<tr><td>${c.numeroOnboarding}</td><td class="num">${c.participantes}</td><td class="num">${pct(c.promedioAvance)}</td></tr>`)
     .join("");
-  // En el resumen individual el promedio del grupo seria el de una sola persona: no se muestra esa tabla.
-  const mostrarCohortes = !soloEvaluacion || participantes.length > 1;
 
   const resumenRows = participantes
     .map((p) => {
       const { completados, total } = nivelesCompletados(p);
-      const ev = resumenEval(p);
-      const prom = soloEvaluacion ? ev.prom : p.promedioGeneral;
-      const avance = soloEvaluacion ? `${ev.presentadas}/${islas.length}` : `${completados}/${total}`;
-      return `<tr><td>${htmlEsc(p.nombre)}</td><td>${htmlEsc(p.cedula)}</td><td class="num">${p.numeroOnboarding}</td><td class="num" style="color:${colorDe(prom)};font-weight:bold">${pct(prom)}</td><td class="num">${avance}</td></tr>`;
+      return `<tr><td>${htmlEsc(p.nombre)}</td><td>${htmlEsc(p.cedula)}</td><td class="num">${p.numeroOnboarding}</td><td class="num" style="color:${colorDe(p.promedioGeneral)};font-weight:bold">${pct(p.promedioGeneral)}</td><td class="num">${completados}/${total}</td></tr>`;
     })
     .join("");
 
-  const tarjetasResumen = islas
-    .map((isla) => {
-      const notas = participantes.map((p) => evaluacionDe(p, isla));
-      const promIsla = promedio(notas.filter((v): v is number => v != null));
-      const body = participantes
-        .map((p, i) => `<tr><td>${htmlEsc(p.nombre)}</td><td class="num" style="color:${colorDe(notas[i])};font-weight:bold">${pct(notas[i])}</td></tr>`)
-        .join("");
-      return `<div class="card"><div class="card-head"><span>I${isla.islaKey} · ${htmlEsc(isla.islaNombre)}</span><span class="kpi">Promedio ${pct(promIsla)}</span></div><div class="card-body"><table><thead><tr><th>Participante</th><th>Evaluación final</th></tr></thead><tbody>${body}</tbody></table></div></div>`;
-    })
-    .join("");
-
-  const tarjetas = soloEvaluacion ? tarjetasResumen : islas
+  const tarjetas = (data.islas || [])
     .map((isla) => {
       const promedios = participantes
         .map((p) => p.porIsla?.find((x) => x.islaKey === isla.islaKey)?.promedio)
@@ -328,52 +324,51 @@ function buildReportPdfHtml(data: ReporteCompletoData, tituloOverride?: string, 
     })
     .join("");
 
-  const soloUnOnboarding = (data.cohortes || []).length === 1 ? data.cohortes[0].numeroOnboarding : null;
-  const nombreReporte = soloEvaluacion ? "Resumen de evaluaciones finales" : "Reporte Onboarding AGP";
-  const titulo = tituloOverride ?? (soloUnOnboarding != null
-    ? `${nombreReporte} - Grupo #${soloUnOnboarding}`
-    : nombreReporte);
+  const cuerpo = `<div class="resumen">
+<div><h2>Resumen por numero de onboarding</h2><table><thead><tr><th># Onboarding</th><th>Participantes</th><th>Promedio avance</th></tr></thead><tbody>${cohortRows}</tbody></table></div>
+<div><h2>Participantes</h2><table><thead><tr><th>Participante</th><th>Cédula</th><th># Onb.</th><th>Promedio</th><th>Niveles</th></tr></thead><tbody>${resumenRows}</tbody></table></div>
+</div>
+<h2>Detalle por isla y nivel (%)</h2>
+<div class="tarjetas">${tarjetas}</div>`;
 
-  // Colores y tipografia de la marca AGP sGlass (guia de marca): aguamarina
-  // 8FC6D0/95CBD6 para encabezados y tarjetas, naranja FBAE40 solo para el
-  // promedio destacado, gris 4C4C4C para el texto y Plus Jakarta Sans. Los
-  // colores de puntaje (verde/naranja/rojo) se mantienen porque indican nivel.
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap"/>
-<style>
-@page{size:A4 landscape;margin:8mm;}
-body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:10px;color:#4C4C4C;margin:12px;}
-table{border-collapse:collapse;width:100%;}
-th,td{border:1px solid #8995A6;padding:3px 5px;}
-th{background:#8FC6D0;color:#2B2B2B;font-size:9px;font-weight:700;}
-td{font-size:9px;}
-td.num{text-align:center;}
-h1{font-size:18px;font-weight:800;color:#4C4C4C;margin:0;}
-h2{font-size:12px;font-weight:700;color:#4C4C4C;margin:12px 0 6px;padding-bottom:2px;border-bottom:2px solid #8FC6D0;}
-p{color:#4C4C4C;font-size:10px;margin:0;}
-.marca{display:flex;height:4px;margin:6px 0 4px;}
-.marca span:first-child{flex:1;background:#8FC6D0;}
-.marca span:last-child{width:60px;background:#FBAE40;}
+  return pdfDocumento(tituloOverride ?? tituloDeGrupo(data, "Reporte Onboarding AGP"), data.generado, cuerpo, `
 .resumen{display:flex;gap:16px;align-items:flex-start;}
 .resumen > div{flex:1;}
 .resumen > div:first-child{flex:0 0 260px;}
 .tarjetas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
-.tarjetas.tres{grid-template-columns:repeat(3,minmax(0,1fr));}
 .card{border:1px solid #95CBD6;border-radius:6px;overflow:hidden;break-inside:avoid;page-break-inside:avoid;}
 .card-head{display:flex;justify-content:space-between;align-items:center;background:#E6F4F6;padding:5px 8px;font-size:11px;font-weight:700;color:#4C4C4C;}
 .card-body{padding:6px;}
-.kpi{background:#FBAE40;color:#2B2B2B;border-radius:4px;padding:1px 8px;font-weight:800;}
-</style></head><body>
-<h1>${htmlEsc(titulo)}</h1>
-<div class="marca"><span></span><span></span></div>
-<p>AGP sGlass · Generado: ${htmlEsc(fechaBogota(data.generado))} (hora de Bogotá)</p>
-<div class="resumen">
-${mostrarCohortes ? `<div><h2>Resumen por numero de onboarding</h2><table><thead><tr><th># Onboarding</th><th>Participantes</th><th>${soloEvaluacion ? "Promedio evaluaciones" : "Promedio avance"}</th></tr></thead><tbody>${cohortRows}</tbody></table></div>` : ""}
-<div><h2>Participantes</h2><table><thead><tr><th>Participante</th><th>Cédula</th><th># Onb.</th><th>${soloEvaluacion ? "Prom. evaluaciones" : "Promedio"}</th><th>${soloEvaluacion ? "Evaluaciones" : "Niveles"}</th></tr></thead><tbody>${resumenRows}</tbody></table></div>
-</div>
-<h2>${soloEvaluacion ? "Evaluación final por isla (%)" : "Detalle por isla y nivel (%)"}</h2>
-<div class="tarjetas${soloEvaluacion ? " tres" : ""}">${tarjetas}</div>
-</body></html>`;
+.kpi{background:#3894E0;color:#FFFFFF;border-radius:4px;padding:1px 8px;font-weight:800;}`);
+}
+
+// "Resumen": una sola tabla, una fila por participante y una columna por isla
+// con la nota de su evaluacion final (el ultimo nivel de cada isla).
+function buildResumenPdfHtml(data: ReporteCompletoData, tituloOverride?: string) {
+  const islas = data.islas || [];
+  const notaDe = (p: ReporteParticipanteFila, isla: ReporteIslaCatalogo) => {
+    const ultimo = isla.niveles?.[isla.niveles.length - 1];
+    const bloque = p.porIsla?.find((x) => x.islaKey === isla.islaKey);
+    const v = bloque?.niveles?.find((n) => n.nivelKey === ultimo?.nivelKey)?.puntaje;
+    return v != null ? `${v}%` : "—";
+  };
+
+  const thead = `<tr><th></th>${islas.map((is) => `<th>${htmlEsc(is.islaNombre)}</th>`).join("")}</tr>`;
+  const body = (data.participantes || [])
+    .map((p) => `<tr><td class="nombre">${htmlEsc(p.nombre)}</td>${islas.map((is) => `<td class="nota">${notaDe(p, is)}</td>`).join("")}</tr>`)
+    .join("");
+
+  return pdfDocumento(
+    tituloOverride ?? tituloDeGrupo(data, "Resumen de evaluaciones finales"),
+    data.generado,
+    `<table class="consolidado" style="margin-top:14px"><thead>${thead}</thead><tbody>${body}</tbody></table>`,
+    `
+.consolidado th{font-size:10px;text-align:left;padding:5px 6px;}
+.consolidado td{font-size:10px;padding:5px 6px;}
+.consolidado td.nombre{background:#8FC6D0;color:#2B2B2B;font-weight:700;white-space:nowrap;}
+.consolidado td.nota{text-align:right;}
+.consolidado tr{break-inside:avoid;page-break-inside:avoid;}`
+  );
 }
 
 // Entrega el reporte como PDF. En el celular/tablet se genera el archivo y se
@@ -799,8 +794,7 @@ export default function AdminPanel() {
     return () => clearTimeout(t);
   }, [filtroNombre, filtroCedula, filtroOnb, cargarReporteCompleto]);
 
-  // soloEvaluacion = boton "Resumen": solo la nota de la evaluacion final de cada isla.
-  const exportarReportePdf = useCallback(async (soloEvaluacion: boolean) => {
+  const exportarReportePdf = useCallback(async () => {
     if (selectedOnboardingReporte == null) {
       Alert.alert("Selecciona un onboarding", "Elige primero el numero de onboarding para el que quieres el PDF.");
       return;
@@ -811,7 +805,7 @@ export default function AdminPanel() {
     }
     setExportandoPdf(true);
     try {
-      await entregarPdf(buildReportPdfHtml(reporteFiltrado, undefined, soloEvaluacion));
+      await entregarPdf(buildReportPdfHtml(reporteFiltrado));
     } catch (e: any) {
       Alert.alert("PDF", e?.message || "No se pudo generar el PDF.");
     } finally {
@@ -820,6 +814,7 @@ export default function AdminPanel() {
   }, [reporteFiltrado, selectedOnboardingReporte]);
 
   // PDF de un solo participante: mismas tarjetas del reporte, con una sola fila.
+  // soloEvaluacion = boton "Resumen" (solo por candidato): la nota de la evaluacion final de cada isla.
   const exportarReporteUsuarioPdf = useCallback(async (soloEvaluacion: boolean) => {
     if (!reporteCompleto || !participanteReporte) {
       Alert.alert("Sin datos", "Actualiza el reporte antes de exportar.");
@@ -828,12 +823,12 @@ export default function AdminPanel() {
     setExportandoPdf(true);
     try {
       const cohorte = (reporteCompleto.cohortes || []).filter((c) => c.numeroOnboarding === participanteReporte.numeroOnboarding);
+      const datos = { ...reporteCompleto, cohortes: cohorte, participantes: [participanteReporte] };
+      const sufijo = `${participanteReporte.nombre} (Onboarding #${participanteReporte.numeroOnboarding})`;
       await entregarPdf(
-        buildReportPdfHtml(
-          { ...reporteCompleto, cohortes: cohorte, participantes: [participanteReporte] },
-          `${soloEvaluacion ? "Resumen de evaluaciones finales" : "Reporte individual"} - ${participanteReporte.nombre} (Onboarding #${participanteReporte.numeroOnboarding})`,
-          soloEvaluacion
-        )
+        soloEvaluacion
+          ? buildResumenPdfHtml(datos, `Resumen de evaluaciones finales - ${sufijo}`)
+          : buildReportPdfHtml(datos, `Reporte individual - ${sufijo}`)
       );
     } catch (e: any) {
       Alert.alert("PDF", e?.message || "No se pudo generar el PDF.");
@@ -2026,17 +2021,10 @@ export default function AdminPanel() {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.reporteBtnPrimary, (!d || exportandoPdf) && { opacity: 0.45 }]}
-            onPress={() => exportarReportePdf(false)}
+            onPress={exportarReportePdf}
             disabled={!d || exportandoPdf}
           >
             <Text style={styles.reporteBtnPrimaryText}>{exportandoPdf ? "Generando PDF..." : "Descargar PDF"}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.reporteBtnPrimary, { marginLeft: sp(10) }, (!d || exportandoPdf) && { opacity: 0.45 }]}
-            onPress={() => exportarReportePdf(true)}
-            disabled={!d || exportandoPdf}
-          >
-            <Text style={styles.reporteBtnPrimaryText}>Resumen</Text>
           </TouchableOpacity>
         </View>
 
