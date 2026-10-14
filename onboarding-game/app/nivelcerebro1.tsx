@@ -471,17 +471,17 @@ export default function NivelCerebro() {
                           const isSel   = selCells.some(s => s.r === r && s.c === c);
                           const isFound = !!foundCells[key];
                           const clr     = cellClrs[key];
-                          const isHint  = hintCell !== null && hintCell.r === r && hintCell.c === c && !isFound;
+                          const isHint  = hintCell !== null && hintCell.r === r && hintCell.c === c;   // la pista se ve aunque la letra ya sea de una palabra encontrada
 
                           const bg =
-                            isFound ? clr :
                             isHint  ? "#FFD700" :
+                            isFound ? clr :
                             isSel   ? "#D1D5DB" :
                             "#FEFCE8";
 
                           const bd =
-                            isFound ? clr :
                             isHint  ? "#FFA000" :
+                            isFound ? clr :
                             isSel   ? "#9CA3AF" :
                             "#BFDBFE";
 
