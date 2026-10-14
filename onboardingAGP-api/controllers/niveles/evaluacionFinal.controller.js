@@ -1,5 +1,8 @@
 const { sql, getPool } = require("../../config/db");
 const { obtenerPreguntasEvaluacion } = require("../../models/niveles/evaluacionFinal.model");
+const { incrementarIntento } = require("../../models/intentos.model");
+const { APROBADO_MIN } = require("../../config/aprobado");
+const { valorColumna } = require("../../models/columnasNivel");
 
 const TABLA_RESULTADOS = "dbo.Onboarding_Resultados_Nivel";
 const TABLA_USUARIOS = "dbo.Onboarding_Usuarios_NEW";
@@ -52,7 +55,7 @@ async function getPreguntasEvaluacion(req, res) {
 
 exports.upsertResultado = async function upsertResultado(req, res) {
   try {
-    const { usuarioKey, nivelKey, puntaje } = req.body;
+    const { usuarioKey, nivelKey, puntaje, mismatches, livesLeft } = req.body;
 
     const uk = Number(usuarioKey);
     const nk = Number(nivelKey);
@@ -69,6 +72,13 @@ exports.upsertResultado = async function upsertResultado(req, res) {
     }
 
     const pool = await getPool();
+
+    // Errores y vidas son opcionales: si la pantalla no los envia se guarda NULL, no 0.
+    const mm = await valorColumna(pool, "MISMATCHES", mismatches);
+    const ll = await valorColumna(pool, "LIVES_LEFT", livesLeft);
+    const aprobado = pct >= APROBADO_MIN ? 1 : 0;   // criterio unico: 70 % o mas
+    // El conteo de intentos vive aparte (sobrevive al borrado de consumirReintento).
+    const intento = await incrementarIntento(uk, nk);
 
     const check = await pool
       .request()
@@ -87,11 +97,18 @@ exports.upsertResultado = async function upsertResultado(req, res) {
         .input("usuarioKey", sql.Int, uk)
         .input("nivelKey", sql.Int, nk)
         .input("puntaje", sql.Int, pct)
+        .input("aprobado", sql.Bit, aprobado)
+        .input("intento", sql.Int, intento)
+        .input("mismatches", sql.Int, mm)
+        .input("livesLeft", sql.Int, ll)
         .query(`
           UPDATE ${TABLA_RESULTADOS}
           SET PUNTAJE = @puntaje,
               FECHA = GETDATE(),
-              APROBADO = CASE WHEN @puntaje >= 80 THEN 1 ELSE 0 END
+              APROBADO = @aprobado,
+              INTENTO = @intento,
+              MISMATCHES = @mismatches,
+              LIVES_LEFT = @livesLeft
           WHERE USUARIO_KEY = @usuarioKey
             AND NIVELES_KEY = @nivelKey
         `);
@@ -101,12 +118,15 @@ exports.upsertResultado = async function upsertResultado(req, res) {
         .input("usuarioKey", sql.Int, uk)
         .input("nivelKey", sql.Int, nk)
         .input("puntaje", sql.Int, pct)
-        .input("aprobado", sql.Bit, pct >= 80 ? 1 : 0)
+        .input("aprobado", sql.Bit, aprobado)
+        .input("intento", sql.Int, intento)
+        .input("mismatches", sql.Int, mm)
+        .input("livesLeft", sql.Int, ll)
         .query(`
           INSERT INTO ${TABLA_RESULTADOS}
-            (USUARIO_KEY, NIVELES_KEY, PUNTAJE, APROBADO, FECHA)
+            (USUARIO_KEY, NIVELES_KEY, PUNTAJE, APROBADO, INTENTO, MISMATCHES, LIVES_LEFT, FECHA)
           VALUES
-            (@usuarioKey, @nivelKey, @puntaje, @aprobado, GETDATE())
+            (@usuarioKey, @nivelKey, @puntaje, @aprobado, @intento, @mismatches, @livesLeft, GETDATE())
         `);
     }
 

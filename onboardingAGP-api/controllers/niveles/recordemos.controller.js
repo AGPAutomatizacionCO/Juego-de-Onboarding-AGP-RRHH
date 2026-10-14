@@ -82,7 +82,7 @@ exports.getRecordemosByNivel = async (req, res) => {
 exports.guardarResultado = async (req, res) => {
   try {
     const nivelKey = toInt(req.params.nivelKey);
-    const { usuarioKey, islaKey, livesLeft } = req.body || {};
+    const { usuarioKey, islaKey, livesLeft, mismatches } = req.body || {};
 
     if (!nivelKey) return res.status(400).json({ message: "nivelKey inválido" });
 
@@ -95,7 +95,8 @@ exports.guardarResultado = async (req, res) => {
       usuarioKey: uk,
       islaKey: isla,
       nivelKey,
-      livesLeft: toInt(livesLeft),
+      livesLeft: livesLeft == null ? null : toInt(livesLeft),
+      mismatches: mismatches == null ? null : toInt(mismatches),
     });
 
     return res.json({

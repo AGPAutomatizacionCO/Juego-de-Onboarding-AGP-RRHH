@@ -2,6 +2,7 @@
 const LecturaModel = require("../../models/niveles/lectura.model");
 const VisualModel  = require("../../models/niveles/visual.model");
 const IslasModel   = require("../../models/IslasModel");
+const { APROBADO_MIN } = require("../../config/aprobado");
 
 const toInt = (v) => {
   const n = Number(v);
@@ -81,7 +82,7 @@ exports.getLecturaByNivel = async (req, res) => {
 exports.guardarResultadoLectura = async (req, res) => {
   try {
     const nivelKey = toInt(req.params.nivelKey);
-    const { usuarioKey, puntaje, aprobado, livesLeft, correctas, total } = req.body || {};
+    const { usuarioKey, puntaje, aprobado, livesLeft, mismatches, correctas, total } = req.body || {};
 
     if (!nivelKey) return res.status(400).json({ message: "nivelKey inválido" });
 
@@ -97,9 +98,9 @@ exports.guardarResultadoLectura = async (req, res) => {
       usuarioKey:  uk,
       nivelKey,
       puntaje:     p,
-      aprobado:    aprobadoBool,
-      mismatches:  0,
-      livesLeft:   toInt(livesLeft) ?? 0,
+      aprobado:    p >= APROBADO_MIN,   // criterio unico: 70 % o mas
+      mismatches:  mismatches == null ? null : toInt(mismatches),
+      livesLeft:   livesLeft == null ? null : toInt(livesLeft),
       correctas:   toInt(correctas) ?? null,
       total:       toInt(total) ?? null,
     });

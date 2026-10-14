@@ -1,5 +1,6 @@
 const VisualModel = require("../../models/niveles/visual.model");
 const IslasModel = require("../../models/IslasModel"); // ✅ RUTA CORRECTA
+const { APROBADO_MIN } = require("../../config/aprobado");
 
 // GET /api/niveles/visual/:nivelKey
 exports.getVisualByNivelKey = async (req, res) => {
@@ -46,8 +47,10 @@ exports.guardarResultadoVisual = async (req, res) => {
       return res.status(400).json({ message: "puntaje inválido" });
     }
 
-    const mm = Number(mismatches ?? 0);
-    const ll = Number(livesLeft ?? 0);
+    // Si el nivel no reporta errores/vidas se guarda NULL (no 0): el panel admin
+    // no debe mostrar como real un dato que el jugador nunca envió.
+    const mm = mismatches == null ? null : Number(mismatches);
+    const ll = livesLeft == null ? null : Number(livesLeft);
 
     const aprobadoBool = Boolean(aprobado);
 
@@ -56,9 +59,9 @@ exports.guardarResultadoVisual = async (req, res) => {
       usuarioKey: uk,
       nivelKey,
       puntaje: p,
-      aprobado: aprobadoBool,
-      mismatches: Number.isFinite(mm) ? mm : 0,
-      livesLeft: Number.isFinite(ll) ? ll : 0,
+      aprobado: p >= APROBADO_MIN,   // criterio unico: 70 % o mas
+      mismatches: Number.isFinite(mm) ? mm : null,
+      livesLeft: Number.isFinite(ll) ? ll : null,
     });
 
     // 2) ✅ Si aprobó, sube progreso de nivel del usuario (sin bajar nunca)

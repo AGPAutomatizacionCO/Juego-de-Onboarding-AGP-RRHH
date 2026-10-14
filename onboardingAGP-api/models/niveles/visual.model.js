@@ -1,5 +1,6 @@
 const { connectDB, sql } = require("../../config/db");
 const { incrementarIntento } = require("../intentos.model");
+const { valorColumna } = require("../columnasNivel");
 
 const TABLA_NIVELES = "dbo.Onboarding_Niveles";
 const TABLA_VISUAL = "dbo.Onboarding_Visual";
@@ -80,8 +81,8 @@ exports.upsertResultadoNivel = async ({
     .input("PUNTAJE", sql.Int, Number(puntaje))
     .input("APROBADO", sql.Bit, aprobado ? 1 : 0)
     .input("INTENTO", sql.Int, intento)
-    .input("MISMATCHES", sql.Int, Number(mismatches ?? 0))
-    .input("LIVES_LEFT", sql.Int, Number(livesLeft ?? 0))
+    .input("MISMATCHES", sql.Int, await valorColumna(pool, "MISMATCHES", mismatches))
+    .input("LIVES_LEFT", sql.Int, await valorColumna(pool, "LIVES_LEFT", livesLeft))
     .query(`
       IF EXISTS (
         SELECT 1 FROM ${TABLA_RESULTADOS_NIVEL}

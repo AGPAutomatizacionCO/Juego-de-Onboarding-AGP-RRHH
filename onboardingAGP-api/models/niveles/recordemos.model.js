@@ -1,6 +1,7 @@
 const sql = require("mssql");
 const { getPool } = require("../../config/db");
 const { incrementarIntento } = require("../intentos.model");
+const { valorColumna } = require("../columnasNivel");
 
 /**
  * Obtiene las palabras y conceptos desde la tabla dbo.Onboarding_Recordemos
@@ -36,6 +37,7 @@ async function completarRecordemos({
   islaKey,
   nivelKey,
   livesLeft = null,
+  mismatches = null,
 }) {
   const pool = await getPool();
   if (!pool) throw new Error("No hay conexión a la base de datos (pool null).");
@@ -52,8 +54,8 @@ async function completarRecordemos({
     .input("PUNTAJE", sql.Int, 100)
     .input("APROBADO", sql.Bit, 1)
     .input("INTENTO", sql.Int, intento)
-    .input("MISMATCHES", sql.Int, 0)
-    .input("LIVES_LEFT", sql.Int, livesLeft)
+    .input("MISMATCHES", sql.Int, await valorColumna(pool, "MISMATCHES", mismatches))
+    .input("LIVES_LEFT", sql.Int, await valorColumna(pool, "LIVES_LEFT", livesLeft))
     .query(`
       INSERT INTO dbo.Onboarding_Resultados_Nivel
         (USUARIO_KEY, NIVELES_KEY, PUNTAJE, APROBADO, INTENTO, FECHA, MISMATCHES, LIVES_LEFT)

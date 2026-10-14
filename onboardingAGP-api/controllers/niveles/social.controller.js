@@ -5,6 +5,8 @@ const {
 } = require("../../models/niveles/social.model");
 const { sql, getPool } = require("../../config/db");
 const { incrementarIntento } = require("../../models/intentos.model");
+const { APROBADO_MIN } = require("../../config/aprobado");
+const { valorColumna } = require("../../models/columnasNivel");
 
 const TABLA_USUARIOS = "dbo.Onboarding_Usuarios_NEW";
 
@@ -70,7 +72,8 @@ exports.completar = async (req, res) => {
     const nk = Number(nivelKey);
     const p = Number(puntaje ?? 0);
     const aprobadoBool = Boolean(aprobado);
-    const ll = Number(livesLeft ?? 0);
+    // Si el nivel no reporta errores/vidas se guarda NULL (no 0).
+    
 
     const pool = await getPool();
 
@@ -84,10 +87,10 @@ exports.completar = async (req, res) => {
       .input("USUARIO_KEY", sql.Int, uk)
       .input("NIVELES_KEY", sql.Int, nk)
       .input("PUNTAJE", sql.Int, p)
-      .input("APROBADO", sql.Bit, aprobadoBool ? 1 : 0)
+      .input("APROBADO", sql.Bit, p >= APROBADO_MIN ? 1 : 0)   // criterio unico: 70 % o mas
       .input("INTENTO", sql.Int, intento)
-      .input("MISMATCHES", sql.Int, Number(mismatches ?? 0))
-      .input("LIVES_LEFT", sql.Int, ll)
+      .input("MISMATCHES", sql.Int, await valorColumna(pool, "MISMATCHES", mismatches))
+      .input("LIVES_LEFT", sql.Int, await valorColumna(pool, "LIVES_LEFT", livesLeft))
       .query(`
         INSERT INTO dbo.Onboarding_Resultados_Nivel
           (USUARIO_KEY, NIVELES_KEY, PUNTAJE, APROBADO, INTENTO, FECHA, MISMATCHES, LIVES_LEFT)
