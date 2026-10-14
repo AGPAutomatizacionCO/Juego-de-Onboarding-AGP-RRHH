@@ -439,3 +439,36 @@ El problema real estaba en el frontend (`app/podio.tsx`):
 - Título corregido a "Podio" a secas, sin la referencia obsoleta a evaluación final.
 
 Publicado por `eas update` (branch `production`) — no requirió compilar un nuevo APK.
+
+---
+
+## 2026-10 — Correcciones del Excel de seguimiento (filas 1-23)
+
+A partir de octubre el seguimiento se lleva por las filas del Excel de AGP, no por los
+17 puntos de `010-criterios-aceptacion-17-puntos.md`.
+
+| Fila | Cambio | Commit | Estado |
+|---|---|---|---|
+| 1 | El mapa muestra el promedio de la isla y el podio explica su criterio | `5ea221c` | Publicado (OTA) |
+| 2 | El reintento limpia las marcas de completado correctas | `67d15fd` | Publicado (OTA) |
+| 3 | Los mapas de isla leen el avance desde el servidor (`sincronizarProgresoIsla`) | `67d15fd` | Publicado (OTA) |
+| 11 | Manipulación: al perder todas las vidas se reinicia el nivel visual completo | `bb2169d` | Publicado (OTA) |
+| 15 | Metrología: el nivel social guardaba su avance con la clave de Calidad | `2f8b882` | Publicado (OTA) |
+| 16 | Panel admin: filtros por nombre, cédula y onboarding; reporte por persona; PDF por isla con colores AGP, "Reporte por Isla - Onboarding #N"; Resumen por candidato | `f5fbf8e`, `552cb3c`, `931320b`, `f04adde` | Publicado (OTA) |
+| 17 | Panel admin: errores, vidas e intentos reales; aprobado con ≥ 70 % (`config/aprobado.js`) | `08903af` (app), `82615d0` (API) | App publicada; **API pendiente de desplegar** (`backend-deploy.zip`) |
+| 18 | Lectura OF (nivel 31): hoja de ruta, encabezado y tabla de una OF real, 2 memorias de colores | `5d3f5d1` + cambios sin commit | OTA `5b3b6fe7` en prueba |
+| 20 | Calidad: situaciones 3 y 4 del aprendizaje social según la norma | `891885c` | Publicado (OTA) |
+
+### Fila 17 — detalle del servidor
+
+- Cada nivel envía `mismatches` y `livesLeft`; el servidor guarda NULL o 0 según admita
+  la columna (`models/columnasNivel.js` → `valorColumna`).
+- La evaluación final cuenta intentos con `incrementarIntento`.
+- Tras desplegar: verificar `/api/health` y `/api/islas/catalogo`, y repetir las pruebas
+  con las cédulas `900000001`-`900000005` (onboarding 99).
+
+### Hallazgos fuera de alcance (para AGP)
+
+- `nivelcerebro4` (Recordemos de Conceptos) no envía `islaKey`; el servidor asume la isla 1.
+- Los endpoints de subida de imágenes y del editor admin no tienen autenticación.
+- El "Aprobó" de la isla completa usa una regla distinta del 70 % de los niveles.
