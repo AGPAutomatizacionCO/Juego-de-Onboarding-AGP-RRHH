@@ -339,7 +339,7 @@ function buildReportPdfHtml(data: ReporteCompletoData, tituloOverride?: string) 
 .card{border:1px solid #95CBD6;border-radius:6px;overflow:hidden;break-inside:avoid;page-break-inside:avoid;}
 .card-head{display:flex;justify-content:space-between;align-items:center;background:#E6F4F6;padding:5px 8px;font-size:11px;font-weight:700;color:#4C4C4C;}
 .card-body{padding:6px;}
-.kpi{background:#3894E0;color:#FFFFFF;border-radius:4px;padding:1px 8px;font-weight:800;}`);
+.kpi{background:#FFFFFF;border:1px solid #8FC6D0;color:#4C4C4C;border-radius:4px;padding:1px 8px;font-weight:800;}`);
 }
 
 // "Resumen": una sola tabla, una fila por participante y una columna por isla
@@ -353,20 +353,25 @@ function buildResumenPdfHtml(data: ReporteCompletoData, tituloOverride?: string)
     return v != null ? `${v}%` : "—";
   };
 
-  const thead = `<tr><th></th>${islas.map((is) => `<th>${htmlEsc(is.islaNombre)}</th>`).join("")}</tr>`;
+  // Columnas de islas del mismo ancho y todo centrado: antes los anchos salian
+  // del largo de cada nombre (HSE quedaba angosta) y titulos y notas se alineaban distinto.
+  const colgroup = `<colgroup><col class="col-nombre"/>${islas.map(() => "<col/>").join("")}</colgroup>`;
+  const thead = `<tr><th class="nombre">Participante</th>${islas.map((is) => `<th>${htmlEsc(is.islaNombre)}</th>`).join("")}</tr>`;
   const body = (data.participantes || [])
-    .map((p) => `<tr><td class="nombre">${htmlEsc(p.nombre)}</td>${islas.map((is) => `<td class="nota">${notaDe(p, is)}</td>`).join("")}</tr>`)
+    .map((p) => `<tr><td class="nombre">${htmlEsc(p.nombre)}</td>${islas.map((is) => `<td>${notaDe(p, is)}</td>`).join("")}</tr>`)
     .join("");
 
   return pdfDocumento(
     tituloOverride ?? tituloDeGrupo(data, "Resumen de evaluaciones finales"),
     data.generado,
-    `<table class="consolidado" style="margin-top:14px"><thead>${thead}</thead><tbody>${body}</tbody></table>`,
+    `<table class="consolidado" style="margin-top:16px">${colgroup}<thead>${thead}</thead><tbody>${body}</tbody></table>`,
     `
-.consolidado th{font-size:10px;text-align:left;padding:5px 6px;}
-.consolidado td{font-size:10px;padding:5px 6px;}
-.consolidado td.nombre{background:#8FC6D0;color:#2B2B2B;font-weight:700;white-space:nowrap;}
-.consolidado td.nota{text-align:right;}
+.consolidado{table-layout:fixed;}
+.consolidado col.col-nombre{width:22%;}
+.consolidado th{font-size:10px;line-height:1.3;text-align:center;vertical-align:middle;padding:8px 6px;}
+.consolidado td{font-size:11px;text-align:center;vertical-align:middle;padding:9px 6px;}
+.consolidado th.nombre,.consolidado td.nombre{text-align:left;}
+.consolidado td.nombre{background:#E6F4F6;color:#2B2B2B;font-weight:700;}
 .consolidado tr{break-inside:avoid;page-break-inside:avoid;}`
   );
 }
