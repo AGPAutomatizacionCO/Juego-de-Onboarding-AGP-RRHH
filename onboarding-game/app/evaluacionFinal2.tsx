@@ -20,7 +20,6 @@ const RUTA_VOLVER = "/HSE";
 
 const API_BASE     = `${API_BASE_URL}/api/niveles`;
 const API_USUARIOS = `${API_BASE_URL}/api/usuarios`;
-const API_ISLAS    = `${API_BASE_URL}/api/islas`;
 const ISLA_KEY  = 2;
 const NIVEL_KEY = 10;
 
@@ -254,13 +253,9 @@ export default function NivelEvaluacionFinalHSE() {
       [`u:${usuarioKey}:isla2_nivel5_evaluacion_done`,  "true"],
       [`u:${usuarioKey}:isla2_nivel5_evaluacion_score`, String(pct)],
     ]);
-    try {
-      await fetch(`${API_ISLAS}/${usuarioKey}/avanzar`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nuevaIsla: 9 }),
-      });
-    } catch (e) { console.log("Error desbloqueando islas:", e); }
+    // La isla siguiente la desbloquea el servidor al guardar el resultado
+    // (upsertResultado). Aquí se llamaba a /avanzar con nuevaIsla: 9, que
+    // desbloqueaba TODAS las islas al terminar HSE.
     setSavedPct(pct);
   };
 
