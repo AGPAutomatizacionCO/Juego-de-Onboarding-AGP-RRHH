@@ -212,6 +212,7 @@ export default function NivelRecordemosCrucigramaAGP() {
   const [conceptData, setConceptData] = useState<{ palabra: string; concepto: string } | null>(null);
   const [showConcept, setShowConcept] = useState(false);
   const conceptAnim = useRef(new Animated.Value(0)).current;
+  const failedChecksRef = useRef(0); // veces que se pulsó Validar con el crucigrama incompleto/incorrecto
 
   const inputRefs = useRef<Record<string, TextInput | null>>({});
   const contentOpacity = useRef(new Animated.Value(0)).current;
@@ -475,6 +476,7 @@ export default function NivelRecordemosCrucigramaAGP() {
         setShowFinal(true);
       }, 500);
     } else {
+      failedChecksRef.current += 1;
       Alert.alert(
         "Sigue intentando",
         `Llevas ${solvedCount}/${PLACEMENTS.length} conceptos completos.`
@@ -786,6 +788,7 @@ export default function NivelRecordemosCrucigramaAGP() {
                           islaKey: ISLA_KEY,
                           puntaje: FIXED_SCORE,
                           aprobado: true,
+                          mismatches: failedChecksRef.current,
                         }),
                       });
 

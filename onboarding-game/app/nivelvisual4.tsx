@@ -255,6 +255,10 @@ export default function NivelVisual4() {
   const [mod2EspesorModal, setMod2EspesorModal] = useState<GlassCard|null>(null);
   const currentMod2Group = MOD2_GROUPS[mod2Screen];
 
+  // Errores acumulados (opción incorrecta en módulo 1, "Revisar" fallido en módulo 2) y vidas con las que cerró el último intento del módulo 2.
+  const erroresRef    = useRef(0);
+  const livesFinalRef = useRef(TOTAL_LIVES);
+
   /* ── Animación vida perdida ── */
   const [showLostLife,  setShowLostLife]  = useState(false);
   const breakScale   = useRef(new Animated.Value(0.6)).current;
@@ -334,7 +338,7 @@ export default function NivelVisual4() {
     setAnswered(prev => ({ ...prev, [activeHotspot.id]: option }));
     setCorrect(prev  => ({ ...prev, [activeHotspot.id]: isOk }));
     setModalVisible(false);
-    if (!isOk) { setLives(prev => prev-1); setShowLostLife(true); playLostLifeAnim(); }
+    if (!isOk) { erroresRef.current += 1; setLives(prev => prev-1); setShowLostLife(true); playLostLifeAnim(); }
   };
   const allCorrectCurrent = useMemo(() =>
     currentSub.hotspots.every(h => correct[h.id] === true),
@@ -380,14 +384,17 @@ export default function NivelVisual4() {
     setMod2EspesorRes(newERes);
     setMod2Reviewed(true);
     if (!hasError) {
+      livesFinalRef.current = mod2Lives;
       setTimeout(() => advanceMod2(scoreFromLives(mod2Lives)), 400);
       return;
     }
+    erroresRef.current += 1;
     if (mod2Lives > 1) {
       setMod2Lives(prev => prev-1);
       setShowLostLife(true); playLostLifeAnim();
     } else {
       setMod2Lives(0);
+      livesFinalRef.current = 0;
       setTimeout(() => advanceMod2(scoreFromLives(0)), 600);
     }
   };
@@ -426,7 +433,7 @@ export default function NivelVisual4() {
       ]);
       await fetch(`${API_URL}/api/niveles/visual/${NIVEL_KEY_PROG}/resultado`, {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ usuarioKey:uk, puntaje:score, aprobado:score>=70?1:0, islaKey:ISLA_KEY, nivelKey:NIVEL_KEY_PROG }),
+        body:JSON.stringify({ usuarioKey:uk, puntaje:score, aprobado:score>=70?1:0, mismatches:erroresRef.current, livesLeft:livesFinalRef.current, islaKey:ISLA_KEY, nivelKey:NIVEL_KEY_PROG }),
       });
     } catch(e) { console.error("Error guardando visual4:", e); }
   };

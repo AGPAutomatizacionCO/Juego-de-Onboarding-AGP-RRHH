@@ -524,7 +524,7 @@ export default function NivelVisualManipulacion() {
       await fetch(`${API_URL}/api/niveles/visual/${NIVEL_KEY}/resultado`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usuarioKey: uk, puntaje: score, aprobado: score >= 70 ? 1 : 0, islaKey: ISLA_KEY, nivelKey: NIVEL_KEY }),
+        body: JSON.stringify({ usuarioKey: uk, puntaje: score, aprobado: score >= 70 ? 1 : 0, mismatches: vidasGastadasRef.current, livesLeft: vidas, islaKey: ISLA_KEY, nivelKey: NIVEL_KEY }),
       });
     } catch (e) {
       console.log("Error guardando visual Manipulación:", e);

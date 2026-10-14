@@ -351,6 +351,8 @@ export default function NivelSocialCasos() {
           aprobado:   score >= 70 ? 1 : 0,
           islaKey:    ISLA_KEY,
           nivelKey:   NIVEL_KEY_PROG,
+          mismatches: errores,
+          livesLeft:  lives,
         }),
       });
     } catch (e) {

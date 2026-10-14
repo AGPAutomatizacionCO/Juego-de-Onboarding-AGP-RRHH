@@ -576,7 +576,7 @@ export default function NivelSocialHSE() {
                     await fetch(`${API_URL}/api/niveles/social/${NIVEL_KEY_API}/resultado`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ usuarioKey, puntaje: finalScore, aprobado }),
+                      body: JSON.stringify({ usuarioKey, puntaje: finalScore, aprobado, mismatches: MAX_LIVES - lives, livesLeft: lives }),
                     });
                     await AsyncStorage.multiSet([
                       [`u:${usuarioKey}:isla2_nivel4_social_done`,  "true"],

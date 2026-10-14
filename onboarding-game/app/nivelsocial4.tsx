@@ -182,7 +182,7 @@ export default function NivelSaltoVidrios() {
       await fetch(`${API_URL}/api/niveles/social/${NIVEL_KEY}/resultado`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usuarioKey: Number(uk), puntaje: score, aprobado: 1 }),
+        body: JSON.stringify({ usuarioKey: Number(uk), puntaje: score, aprobado: 1, mismatches: usadas, livesLeft: TOTAL_VIDAS - usadas }),
       });
     } catch (e) { console.log(e); }
   };

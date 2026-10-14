@@ -199,6 +199,7 @@ export default function NivelRecordemosConcepto() {
   const [conceptData, setConceptData] = useState<{ palabra: string; concepto: string } | null>(null);
   const [showConcept, setShowConcept] = useState(false);
   const conceptAnim = useRef(new Animated.Value(0)).current;
+  const failedChecksRef = useRef(0); // veces que se pulsó Validar con el crucigrama incompleto/incorrecto
   const inputRefs = useRef<Record<string, TextInput | null>>({});
   const contentOpacity = useRef(new Animated.Value(0)).current;
 
@@ -361,7 +362,10 @@ export default function NivelRecordemosConcepto() {
       return acc + (isCellCorrect(r, c) ? 1 : 0);
     }, 0);
     if (correct === total) setTimeout(() => setShowFinal(true), 500);
-    else Alert.alert("Sigue intentando", `Llevas ${solvedCount}/${PLACEMENTS.length} palabras completas.`);
+    else {
+      failedChecksRef.current += 1;
+      Alert.alert("Sigue intentando", `Llevas ${solvedCount}/${PLACEMENTS.length} palabras completas.`);
+    }
   };
 
   const handleHint = () => {
@@ -609,6 +613,7 @@ export default function NivelRecordemosConcepto() {
                             usuarioKey,
                             puntaje: FIXED_SCORE,
                             aprobado: true,
+                            mismatches: failedChecksRef.current,
                           }),
                         }
                       );

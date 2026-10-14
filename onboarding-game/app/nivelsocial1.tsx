@@ -251,7 +251,7 @@ export default function NivelSocial1() {
     run();
   }, []);
 
-  const guardarSocial = async (scorePct: number) => {
+  const guardarSocial = async (scorePct: number, livesNow: number = lives) => {
     if (progresoGuardado || guardando) return;
     const uk = await ensureUsuarioKey();
     if (uk == null) { Alert.alert("No se pudo guardar", "No encontré USUARIO_KEY."); return; }
@@ -265,7 +265,7 @@ export default function NivelSocial1() {
       const res = await fetch(`${API_URL}${COMPLETE_ENDPOINT}`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usuarioKey: uk, islaKey: ISLA_KEY, nivelKey: NIVEL_KEY_SOCIAL, puntaje: scorePct, aprobado, mismatches: MAX_LIVES - lives, livesLeft: lives }),
+        body: JSON.stringify({ usuarioKey: uk, islaKey: ISLA_KEY, nivelKey: NIVEL_KEY_SOCIAL, puntaje: scorePct, aprobado, mismatches: MAX_LIVES - livesNow, livesLeft: livesNow }),
       });
       const j = await safeJson(res);
       console.log("📦 Respuesta guardar social:", JSON.stringify(j));
@@ -303,7 +303,7 @@ export default function NivelSocial1() {
         if (newLives <= 0) {
           // ✅ Game Over: guardar 75% y mostrar modal verde
           setScore(SCORE_GAME_OVER);
-          await guardarSocial(SCORE_GAME_OVER);
+          await guardarSocial(SCORE_GAME_OVER, newLives);
           setShowGameOver(true);
         } else {
           setShowMinusOverlay(true);

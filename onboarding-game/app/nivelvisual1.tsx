@@ -186,7 +186,8 @@ export default function NivelVisual1() {
 
   const score = computeScore(mismatches);
 
-  const saveResultadoVisual = async (puntajeOverride?: number) => {
+  // En game over se llama desde dentro del setMismatches: ahí el estado aún es el anterior, por eso se pasan los valores calculados.
+  const saveResultadoVisual = async (puntajeOverride?: number, mismatchesFinal: number = mismatches, livesFinal: number = lives) => {
     if (!usuarioKey) return;
     const puntajeFinal = puntajeOverride ?? score;
     const aprobado = puntajeFinal >= 70;
@@ -196,8 +197,8 @@ export default function NivelVisual1() {
         usuarioKey,
         puntaje: puntajeFinal,
         aprobado,
-        mismatches,
-        livesLeft: lives,
+        mismatches: mismatchesFinal,
+        livesLeft: livesFinal,
       }),
     });
   };
@@ -448,7 +449,7 @@ export default function NivelVisual1() {
                 ]);
                 setSavedFinalScore(SCORE_GAME_OVER);
                 setSavedAprobado(aprobado);
-                try { await saveResultadoVisual(SCORE_GAME_OVER); } catch (e) { console.log("Error guardando game over:", e); }
+                try { await saveResultadoVisual(SCORE_GAME_OVER, next, newLives); } catch (e) { console.log("Error guardando game over:", e); }
               })();
             } else {
               setShowTryAgain(true);

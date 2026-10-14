@@ -240,7 +240,7 @@ export default function NivelLecturaOF() {
 
     if (mal === 0) {
       const score = scoreFromLives(lives);
-      guardarProgreso(score);
+      guardarProgreso(score, lives);
       showFinalScreen();
     } else {
       const newLives = Math.max(0, lives - 1);
@@ -248,7 +248,7 @@ export default function NivelLecturaOF() {
 
       if (newLives <= 0) {
         setLives(0);
-        guardarProgreso(scoreFromLives(0));
+        guardarProgreso(scoreFromLives(0), 0);
         setShowGameOver(true);
       } else {
         setLives(newLives);
@@ -262,7 +262,7 @@ export default function NivelLecturaOF() {
     Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
   };
 
-  const guardarProgreso = async (score: number) => {
+  const guardarProgreso = async (score: number, livesLeft: number) => {
     try {
       const uk = usuarioKey;
       if (!uk) return;
@@ -276,7 +276,7 @@ export default function NivelLecturaOF() {
       await fetch(`${API_URL}/api/niveles/lectura/${NIVEL_KEY}/resultado`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usuarioKey: uk, puntaje: score, aprobado: score >= 70 ? 1 : 0, islaKey: ISLA_KEY, nivelKey: NIVEL_KEY }),
+        body: JSON.stringify({ usuarioKey: uk, puntaje: score, aprobado: score >= 70 ? 1 : 0, islaKey: ISLA_KEY, nivelKey: NIVEL_KEY, livesLeft, mismatches: MAX_LIVES - livesLeft }),
       });
     } catch (e) {
       console.error("Error guardando progreso lectura OF:", e);

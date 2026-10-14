@@ -286,7 +286,11 @@ export default function NivelVisualCalidad() {
     ]).start(() => setTimeout(() => setShowLostLife(false), 500));
   };
 
+  // Errores acumulados de ambos módulos (cada respuesta incorrecta resta una vida).
+  const erroresRef = useRef(0);
+
   const lostLife = (setLives: React.Dispatch<React.SetStateAction<number>>) => {
+    erroresRef.current += 1;
     setLives(prev => Math.max(0, prev - 1));
     setShowLostLife(true);
     playLostLifeAnim();
@@ -402,12 +406,12 @@ export default function NivelVisualCalidad() {
         : 100;
       const total = Math.round((mod1Avg + mod2Avg) / 2);
       setFinalScore(total);
-      guardarProgreso(total);
+      guardarProgreso(total, mod2Lives);
       setShowFinalResult(true);
     }
   };
 
-  const guardarProgreso = async (score: number) => {
+  const guardarProgreso = async (score: number, livesLeft: number) => {
     try {
       const ukStr = await AsyncStorage.getItem("USUARIO_KEY");
       const uk = Number(ukStr);
@@ -423,6 +427,7 @@ export default function NivelVisualCalidad() {
         body: JSON.stringify({
           usuarioKey: uk, puntaje: score,
           aprobado: score >= 70 ? 1 : 0,
+          mismatches: erroresRef.current, livesLeft,
           islaKey: ISLA_KEY, nivelKey: NIVEL_KEY_PROG,
         }),
       });

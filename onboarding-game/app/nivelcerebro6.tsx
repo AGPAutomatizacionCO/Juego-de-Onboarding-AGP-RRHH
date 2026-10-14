@@ -167,6 +167,7 @@ export default function NivelRecordemosMetrologia() {
   const [showConcept,      setShowConcept]      = useState(false);
 
   const conceptAnim    = useRef(new Animated.Value(0)).current;
+  const failedChecksRef = useRef(0); // veces que se pulsó Validar con el crucigrama incompleto/incorrecto
   const contentOpacity = useRef(new Animated.Value(0)).current;
   const inputRefs      = useRef<Record<string, TextInput | null>>({});
 
@@ -291,7 +292,10 @@ export default function NivelRecordemosMetrologia() {
       return acc + (isCellCorrect(Math.floor(index / COLS), index % COLS) ? 1 : 0);
     }, 0);
     if (correctCells === totalCells) setTimeout(() => setShowFinal(true), 500);
-    else Alert.alert("Sigue intentando", `Llevas ${solvedCount}/${PLACEMENTS.length} palabras completas.`);
+    else {
+      failedChecksRef.current += 1;
+      Alert.alert("Sigue intentando", `Llevas ${solvedCount}/${PLACEMENTS.length} palabras completas.`);
+    }
   };
 
   const handleHint = () => {
@@ -463,7 +467,7 @@ export default function NivelRecordemosMetrologia() {
                     if (uk) {
                       await fetch(`${API_URL}/api/niveles/recordemos/${NIVEL_KEY}/resultado`, {
                         method: "POST", headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ usuarioKey: uk, puntaje: FIXED_SCORE, aprobado: true, islaKey: ISLA_KEY, nivelKey: NIVEL_KEY }),
+                        body: JSON.stringify({ usuarioKey: uk, puntaje: FIXED_SCORE, aprobado: true, islaKey: ISLA_KEY, nivelKey: NIVEL_KEY, mismatches: failedChecksRef.current }),
                       });
                       await AsyncStorage.multiSet([
                         [`u:${uk}:isla${ISLA_KEY}_nivel${NIVEL_KEY}_recordemos_done`,  "true"],

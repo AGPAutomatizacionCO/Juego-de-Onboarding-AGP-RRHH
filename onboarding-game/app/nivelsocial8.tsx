@@ -363,7 +363,7 @@ export default function NivelSocialLecturaOF() {
       await fetch(`${API_URL}/api/niveles/social/${NIVEL_KEY}/resultado`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usuarioKey, puntaje: score, aprobado: score >= 70 ? 1 : 0 }),
+        body: JSON.stringify({ usuarioKey, puntaje: score, aprobado: score >= 70 ? 1 : 0, mismatches: MAX_LIVES - lives, livesLeft: lives }),
       });
     } catch (e) {
       console.error("❌ Error guardando social Lectura OF:", e);

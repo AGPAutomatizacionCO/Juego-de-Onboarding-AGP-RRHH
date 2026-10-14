@@ -186,6 +186,7 @@ export default function NivelLecturaCalidad() {
   const [subIdx,    setSubIdx]    = useState(0);
   const [lives,     setLives]     = useState(MAX_LIVES);
   const [subScores, setSubScores] = useState<number[]>([]);
+  const erroresPrevios = useRef(0); // errores acumulados de los submódulos ya terminados
 
   const [selected, setSelected] = useState<Record<number, OpcionKey | null>>({});
   const [locked,   setLocked]   = useState<Record<number, boolean>>({});
@@ -293,6 +294,7 @@ export default function NivelLecturaCalidad() {
     const score     = scoreFromLives(lives);
     const newScores = [...subScores, score];
     setSubScores(newScores);
+    erroresPrevios.current += MAX_LIVES - lives;
 
     if (subIdx < SUBMODULOS.length - 1) {
       setShowSuccess(true);
@@ -309,12 +311,12 @@ export default function NivelLecturaCalidad() {
     } else {
       const avg = Math.round(newScores.reduce((a, b) => a + b, 0) / newScores.length);
       setFinalScore(avg);
-      await saveProgreso(avg);
+      await saveProgreso(avg, lives, erroresPrevios.current);
       setShowFinal(true);
     }
   };
 
-  const saveProgreso = async (score: number) => {
+  const saveProgreso = async (score: number, livesLeft: number, mismatches: number) => {
     if (!usuarioKey) return;
     try {
       await AsyncStorage.multiSet([
@@ -330,6 +332,7 @@ export default function NivelLecturaCalidad() {
           usuarioKey, puntaje: score,
           aprobado: score >= 70 ? 1 : 0,
           islaKey: ISLA_KEY, nivelKey: NIVEL_KEY,
+          livesLeft, mismatches,
         }),
       });
     } catch (e) { console.error("Error guardando lectura calidad:", e); }

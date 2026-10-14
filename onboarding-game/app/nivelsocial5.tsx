@@ -217,6 +217,7 @@ export default function NivelSocialCalidad() {
         body: JSON.stringify({
           usuarioKey: Number(uk), puntaje: score,
           aprobado: 1, islaKey: ISLA_KEY, nivelKey: NIVEL_KEY,
+          mismatches: usadas, livesLeft: TOTAL_VIDAS - usadas,
         }),
       });
     } catch (e) { console.log(e); }

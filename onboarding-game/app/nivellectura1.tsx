@@ -246,11 +246,11 @@ export default function NivelLectura() {
     "PlusJakartaSans-ExtraBold": require("../assets/fonts/PlusJakartaSans-ExtraBold.ttf"),
   });
 
-  const saveResultadoLectura = async (puntaje: number, aprobado: boolean, correctas: number, total: number) => {
+  const saveResultadoLectura = async (puntaje: number, aprobado: boolean, correctas: number, total: number, livesLeft: number) => {
     if (!usuarioKey) return;
     await apiJson(`${API_URL}/api/niveles/lectura/${NIVEL_KEY}/resultado`, {
       method: "POST",
-      body: JSON.stringify({ usuarioKey, puntaje, aprobado, livesLeft: lives, correctas, total }),
+      body: JSON.stringify({ usuarioKey, puntaje, aprobado, livesLeft, mismatches: MAX_LIVES - livesLeft, correctas, total }),
     });
   };
 
@@ -447,7 +447,7 @@ export default function NivelLectura() {
       setSavedAprobado(aprobado);
 
       try {
-        await saveResultadoLectura(s, aprobado, correctas, frases.length);
+        await saveResultadoLectura(s, aprobado, correctas, frases.length, lives);
       } catch (e) {
         console.log("Error guardando resultado lectura:", e);
       }
@@ -473,7 +473,7 @@ export default function NivelLectura() {
       setSavedFinalScore(s);
       setSavedAprobado(aprobado);
       try {
-        await saveResultadoLectura(s, aprobado, correctas, frases.length);
+        await saveResultadoLectura(s, aprobado, correctas, frases.length, 0);
       } catch (e) {
         console.log("Error guardando resultado game over:", e);
       }

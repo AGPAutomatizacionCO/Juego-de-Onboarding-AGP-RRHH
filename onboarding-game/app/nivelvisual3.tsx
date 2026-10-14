@@ -426,6 +426,10 @@ export default function ProcesosProduccionNivel1() {
 
   const currentToolScreen = MODULE2_SCREENS[toolScreenIndex];
 
+  // Errores acumulados (cada "Revisar" fallido, en ambos módulos) y vidas con las que se cerró el último intento del módulo 2.
+  const erroresRef    = useRef(0);
+  const livesFinalRef = useRef(MOD2_LIVES);
+
   const toolZoneRefs = {
     slot0: useRef<View>(null),
     slot1: useRef<View>(null),
@@ -566,7 +570,7 @@ export default function ProcesosProduccionNivel1() {
       await fetch(`${API_URL}/api/niveles/visual/${NIVEL_KEY_PROG}/resultado`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usuarioKey: uk, puntaje: final, aprobado: final >= 70 ? 1 : 0, islaKey: ISLA_KEY, nivelKey: NIVEL_KEY_PROG }),
+        body: JSON.stringify({ usuarioKey: uk, puntaje: final, aprobado: final >= 70 ? 1 : 0, mismatches: erroresRef.current, livesLeft: livesFinalRef.current, islaKey: ISLA_KEY, nivelKey: NIVEL_KEY_PROG }),
       });
     } catch (e) {
       console.error("Error guardando visual3:", e);
@@ -619,6 +623,7 @@ export default function ProcesosProduccionNivel1() {
     }
 
     // Hay al menos un error → descontar 1 sola vida
+    erroresRef.current += 1;
     if (module1Lives > 1) {
       setModule1Lives((prev) => prev - 1);
       setShowLostLife(true);
@@ -767,10 +772,12 @@ export default function ProcesosProduccionNivel1() {
     setToolResults(newResults);
 
     if (correct === 4) {
+      livesFinalRef.current = toolLives;
       setTimeout(() => { advanceToolCard(scoreFromLives(toolLives)); }, 450);
       return;
     }
 
+    erroresRef.current += 1;
     if (toolLives > 1) {
       setToolLives((prev) => prev - 1);
       setShowLostLife(true);
@@ -779,6 +786,7 @@ export default function ProcesosProduccionNivel1() {
     }
 
     setToolLives(0);
+    livesFinalRef.current = 0;
     setTimeout(() => { advanceToolCard(scoreFromLives(0)); }, 450);
   };
 
@@ -849,6 +857,8 @@ export default function ProcesosProduccionNivel1() {
      REINICIO TOTAL
      ========================================================= */
   const resetAll = () => {
+    erroresRef.current = 0;
+    livesFinalRef.current = MOD2_LIVES;
     setModule1Lives(MOD1_LIVES);
     setModule1Score(null);
     setMod1Phase("uma");

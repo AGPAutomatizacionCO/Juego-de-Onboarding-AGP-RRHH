@@ -211,6 +211,7 @@ export default function NivelRecordemosCalidad() {
   const curWordRef  = useRef<string>("");
   const foundRef    = useRef<Record<string, boolean>>({});
   const colorIdxRef = useRef<number>(0);
+  const failedSelectionsRef = useRef(0); // selecciones que no corresponden a ninguna palabra
   const wordClrsRef = useRef<Record<string, string>>({});
 
   useEffect(() => { selRef.current      = selCells;   }, [selCells]);
@@ -339,6 +340,7 @@ export default function NivelRecordemosCalidad() {
       setTimeout(() => setCheckResult(null), 800);
     } else {
       setCheckResult("fail");
+      failedSelectionsRef.current += 1;
       setSelCells([]); setCurWord("");
       selRef.current = []; curWordRef.current = "";
       setTimeout(() => setCheckResult(null), 600);
@@ -451,6 +453,7 @@ export default function NivelRecordemosCalidad() {
           usuarioKey: uk, islaKey: ISLA_KEY,
           nivelKey: NIVEL_KEY, puntaje: scorePct,
           aprobado: scorePct >= 80,
+          mismatches: failedSelectionsRef.current,
         }),
       });
     } catch (e) { console.log(e); }

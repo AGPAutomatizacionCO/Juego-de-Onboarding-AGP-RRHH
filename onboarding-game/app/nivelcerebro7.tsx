@@ -179,6 +179,7 @@ export default function NivelCerebroManipulacion() {
   const curWordRef  = useRef<string>("");
   const foundRef    = useRef<Record<string, boolean>>({});
   const colorIdxRef = useRef<number>(0);
+  const failedSelectionsRef = useRef(0); // selecciones que no corresponden a ninguna palabra
   const wordClrsRef = useRef<Record<string, string>>({});
 
   useEffect(() => { selRef.current      = selCells;   }, [selCells]);
@@ -284,6 +285,7 @@ export default function NivelCerebroManipulacion() {
       setTimeout(() => setCheckResult(null), 800);
     } else {
       setCheckResult("fail");
+      failedSelectionsRef.current += 1;
       setSelCells([]); setCurWord("");
       selRef.current = []; curWordRef.current = "";
       setTimeout(() => setCheckResult(null), 600);
@@ -395,7 +397,7 @@ export default function NivelCerebroManipulacion() {
       await fetch(`${API_URL}${COMPLETE_ENDPOINT}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usuarioKey: uk, islaKey: ISLA_KEY, nivelKey: NIVEL_KEY, puntaje: scorePct, aprobado: scorePct >= 80 }),
+        body: JSON.stringify({ usuarioKey: uk, islaKey: ISLA_KEY, nivelKey: NIVEL_KEY, puntaje: scorePct, aprobado: scorePct >= 80, mismatches: failedSelectionsRef.current }),
       });
     } catch (e) { console.log(e); }
     finally { setGuardando(false); }

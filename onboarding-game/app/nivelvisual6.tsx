@@ -212,7 +212,8 @@ export default function NivelVisualMetrologia() {
   }, [usuarioKey]);
 
   /* ── Guardar resultado en BD ── */
-  const saveResultadoVisual = async (puntajeOverride?: number) => {
+  // En game over se llama desde dentro del setMismatches: ahí el estado aún es el anterior, por eso se pasan los valores calculados.
+  const saveResultadoVisual = async (puntajeOverride?: number, mismatchesFinal: number = mismatches, livesFinal: number = lives) => {
     if (!usuarioKey) return;
     const puntajeFinal = puntajeOverride ?? score;
     try {
@@ -222,7 +223,7 @@ export default function NivelVisualMetrologia() {
         body: JSON.stringify({
           usuarioKey, puntaje: puntajeFinal,
           aprobado: puntajeFinal >= 70,
-          mismatches, livesLeft: lives,
+          mismatches: mismatchesFinal, livesLeft: livesFinal,
           islaKey: ISLA_KEY, nivelKey: NIVEL_KEY,
         }),
       });
@@ -332,7 +333,7 @@ export default function NivelVisualMetrologia() {
               ]);
               setSavedFinalScore(SCORE_GAME_OVER);
               setSavedAprobado(aprobado);
-              try { await saveResultadoVisual(SCORE_GAME_OVER); } catch {}
+              try { await saveResultadoVisual(SCORE_GAME_OVER, next, newLives); } catch {}
             })();
           } else {
             setShowTryAgain(true);

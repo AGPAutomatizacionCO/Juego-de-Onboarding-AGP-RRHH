@@ -752,9 +752,9 @@ export default function EvaluacionFinalGeneral() {
   };
 
   /* ── Guardar en BD ── */
-  const saveScoreToDB = async (pct: number) => {
+  const saveScoreToDB = async (pct: number, mismatches: number) => {
     if (!usuarioKey) throw new Error("No se encontró USUARIO_KEY en la sesión.");
-    await apiJson(`${API_BASE}/evaluacionFinal/resultado`, { method: "POST", body: JSON.stringify({ usuarioKey, nivelKey: NIVEL_KEY, islaKey: ISLA_KEY, puntaje: pct }) });
+    await apiJson(`${API_BASE}/evaluacionFinal/resultado`, { method: "POST", body: JSON.stringify({ usuarioKey, nivelKey: NIVEL_KEY, islaKey: ISLA_KEY, puntaje: pct, mismatches }) });
     await AsyncStorage.multiSet([
       [`u:${usuarioKey}:isla${ISLA_KEY}_nivel${NIVEL_KEY}_evaluacion_done`,  "true"],
       [`u:${usuarioKey}:isla${ISLA_KEY}_nivel${NIVEL_KEY}_evaluacion_score`, String(pct)],
@@ -773,7 +773,7 @@ export default function EvaluacionFinalGeneral() {
     });
     const pct = Math.round((aciertos / questions.length) * 100);
     setScore(pct); setShowGame(false); setShowResult(true);
-    try { await saveScoreToDB(pct); } catch (e: any) { Alert.alert("Ups", e?.message || "No se pudo guardar tu puntaje."); }
+    try { await saveScoreToDB(pct, questions.length - aciertos); } catch (e: any) { Alert.alert("Ups", e?.message || "No se pudo guardar tu puntaje."); }
   };
 
   const handleFinish = () => {

@@ -160,13 +160,13 @@ export default function NivelLectura4() {
   });
 
   /* ── Guardar resultado en BD ── */
-  const saveResultadoLectura = async (puntaje: number, aprobado: boolean, correctas: number, total: number) => {
+  const saveResultadoLectura = async (puntaje: number, aprobado: boolean, correctas: number, total: number, livesLeft: number) => {
     if (!usuarioKey) return;
     try {
       await fetch(`${API_URL}/api/niveles/lectura/${NIVEL_KEY}/resultado`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usuarioKey, puntaje, aprobado, livesLeft: lives, correctas, total, islaKey: ISLA_KEY }),
+        body: JSON.stringify({ usuarioKey, puntaje, aprobado, livesLeft, mismatches: MAX_LIVES - livesLeft, correctas, total, islaKey: ISLA_KEY }),
       });
     } catch (e) { console.log("Error guardando lectura4:", e); }
   };
@@ -336,7 +336,7 @@ export default function NivelLectura4() {
       setSavedFinalScore(s);
       setSavedAprobado(aprobado);
 
-      try { await saveResultadoLectura(s, aprobado, correctas, frases.length); } catch {}
+      try { await saveResultadoLectura(s, aprobado, correctas, frases.length, lives); } catch {}
 
       showSuccessOverlay();
       speak(`Has respondido correctamente. Tu puntaje es ${s} sobre 100.`);
@@ -357,7 +357,7 @@ export default function NivelLectura4() {
       ]);
       setSavedFinalScore(s);
       setSavedAprobado(false);
-      try { await saveResultadoLectura(s, false, correctas, frases.length); } catch {}
+      try { await saveResultadoLectura(s, false, correctas, frases.length, 0); } catch {}
       setShowGameOver(true);
       speak("Se acabaron las vidas. Tu puntaje es 75.");
     } else {
