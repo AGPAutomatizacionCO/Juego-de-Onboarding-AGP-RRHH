@@ -274,7 +274,7 @@ ${cuerpo}
 
 function tituloDeGrupo(data: ReporteCompletoData, nombre: string) {
   const solo = (data.cohortes || []).length === 1 ? data.cohortes[0].numeroOnboarding : null;
-  return solo != null ? `${nombre} - Grupo #${solo}` : nombre;
+  return solo != null ? `${nombre} - Onboarding #${solo}` : nombre;
 }
 
 // "Descargar PDF": una tarjeta por isla, con una fila por participante y una
@@ -331,7 +331,7 @@ function buildReportPdfHtml(data: ReporteCompletoData, tituloOverride?: string) 
 <h2>Detalle por isla y nivel (%)</h2>
 <div class="tarjetas">${tarjetas}</div>`;
 
-  return pdfDocumento(tituloOverride ?? tituloDeGrupo(data, "Reporte Onboarding AGP"), data.generado, cuerpo, `
+  return pdfDocumento(tituloOverride ?? tituloDeGrupo(data, "Reporte por Isla"), data.generado, cuerpo, `
 .resumen{display:flex;gap:16px;align-items:flex-start;}
 .resumen > div{flex:1;}
 .resumen > div:first-child{flex:0 0 260px;}
