@@ -106,22 +106,22 @@ const casosBase: CasoBase[] = [
       "La apruebo: cada burbuja cumple tamaño <= 0,8 mm y distancia > 100 mm entre sí.",
       "Consulto al Jefe de Calidad sin medir nada más.",
     ],
-    correctaIdx: 1,
+    correctaIdx: 0,
     explicacion:
-      "En Zona B las burbujas se aceptan si miden <= 0,8 mm y están separadas > 100 mm. Cada burbuja de 0,6 mm cumple el tamaño y la distancia entre ellas supera los 100 mm, por lo tanto la pieza es aceptable.",
+      "Aunque las burbujas cumplen con el tamaño permitido (≤ 0,8 mm) y la distancia entre ellas (> 100 mm), la pieza se rechaza porque presenta 3 defectos en la misma Zona B, superando la frecuencia máxima permitida.",
   },
   {
     id: 4,
     pregunta:
-      "En tu turno recibes una cabina trasera. Al inspeccionarla encuentras un quiñe de 2 mm de largo y 0,8 mm de ancho justo en la Zona C (Banda Negra). ¿Qué haces?",
+      "En tu turno recibes una cabina trasera. Al inspeccionarla encuentras un quiñe de 2 mm de largo y 0,8 mm de profundidad justo en la Zona C (Banda Negra). ¿Qué haces?",
     opciones: [
       "La rechazo automáticamente, los quiñes nunca se aceptan en ninguna zona.",
-      "La apruebo: en Zona C los quiñes se aceptan si Long <= 10 mm y Ancho <= 1,5 mm.",
+      "La apruebo: en Zona C los quiñes se aceptan si Longitud ≤ 3 mm y Profundidad ≤ 1,5 mm.",
       "La reproceso sin registrar el defecto para no generar reprocesos.",
     ],
     correctaIdx: 1,
     explicacion:
-      "En Zona C (Banda Negra +10%) los quiñes SÍ se aceptan siempre que Longitud <= 10 mm y Ancho <= 1,5 mm. Este quiñe de 2 mm x 0,8 mm cumple ambos criterios, así que la pieza es aprobada. Además, todo defecto debe registrarse.",
+      "En Zona C los quiñes se aceptan si la longitud es ≤ 3 mm y la profundidad ≤ 1,5 mm. Además, se permite una frecuencia de 1 defecto.",
   },
   {
     id: 5,
