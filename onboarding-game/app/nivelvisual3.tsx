@@ -227,10 +227,15 @@ type DraggableProps = {
   zoneLayouts: Record<string, ZoneLayout>;
   result: boolean | null;
   resetSignal: number;
+  onDrag: (arrastrando: boolean) => void;
 };
 
-function DraggableCard({ item, onDrop, zoneLayouts, result, resetSignal }: DraggableProps) {
+function DraggableCard({ item, onDrop, zoneLayouts, result, resetSignal, onDrag }: DraggableProps) {
   const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  // Props por ref: onDrag re-renderiza al padre (bloquea el scroll) y un responder
+  // recreado a mitad del arrastre pierde el gesto.
+  const props = useRef({ onDrop, zoneLayouts, onDrag });
+  props.current = { onDrop, zoneLayouts, onDrag };
 
   useEffect(() => { pan.setValue({ x: 0, y: 0 }); }, [resetSignal]);
 
@@ -239,24 +244,32 @@ function DraggableCard({ item, onDrop, zoneLayouts, result, resetSignal }: Dragg
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
+        onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: () => {
+          props.current.onDrag(true);
           pan.setOffset({ x: (pan.x as any)._value, y: (pan.y as any)._value });
           pan.setValue({ x: 0, y: 0 });
         },
         onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], { useNativeDriver: false }),
         onPanResponderRelease: (evt) => {
           pan.flattenOffset();
+          props.current.onDrag(false);
           const dropX = evt.nativeEvent.pageX;
           const dropY = evt.nativeEvent.pageY;
           let matchedZone: string | null = null;
-          Object.entries(zoneLayouts).forEach(([zoneId, box]) => {
+          Object.entries(props.current.zoneLayouts).forEach(([zoneId, box]) => {
             if (isInside(box, dropX, dropY)) matchedZone = zoneId;
           });
-          onDrop(item.id, matchedZone);
+          props.current.onDrop(item.id, matchedZone);
+          Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false, friction: 8, tension: 70 }).start();
+        },
+        onPanResponderTerminate: () => {
+          pan.flattenOffset();
+          props.current.onDrag(false);
           Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false, friction: 8, tension: 70 }).start();
         },
       }),
-    [item.id, onDrop, pan, zoneLayouts]
+    [item.id, pan]
   );
 
   return (
@@ -396,6 +409,7 @@ export default function ProcesosProduccionNivel1() {
   const [results,     setResults]     = useState<Record<string, boolean | null>>({});
   const [zoneLayouts, setZoneLayouts] = useState<Record<string, ZoneLayout>>({});
   const [resetSignal, setResetSignal] = useState(0);
+  const [arrastrando, setArrastrando] = useState(false);   // bloquea el scroll del módulo 1 mientras se arrastra
   const [module1Lives, setModule1Lives] = useState(MOD1_LIVES);
   const [module1Score, setModule1Score] = useState<number | null>(null);
   const [bankOrder,    setBankOrder]    = useState<string[]>([]);
@@ -677,6 +691,7 @@ export default function ProcesosProduccionNivel1() {
             key={`${item.id}-${zoneId}-${resetSignal}`}
             item={item}
             onDrop={onDrop}
+            onDrag={setArrastrando}
             zoneLayouts={zoneLayouts}
             result={results[item.id]}
             resetSignal={resetSignal}
@@ -705,6 +720,7 @@ export default function ProcesosProduccionNivel1() {
           key={`${item.id}-${zoneId}-${resetSignal}`}
           item={item}
           onDrop={onDrop}
+          onDrag={setArrastrando}
           zoneLayouts={zoneLayouts}
           result={results[item.id]}
           resetSignal={resetSignal}
@@ -723,6 +739,7 @@ export default function ProcesosProduccionNivel1() {
           key={`${item.id}-bank-${resetSignal}`}
           item={item}
           onDrop={onDrop}
+          onDrag={setArrastrando}
           zoneLayouts={zoneLayouts}
           result={results[item.id]}
           resetSignal={resetSignal}
@@ -916,9 +933,13 @@ export default function ProcesosProduccionNivel1() {
     return (
       <ImageBackground source={fondo} style={styles.background} resizeMode="cover">
         <View style={styles.overlay}>
-          <View
-            style={styles.noScrollContent}
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            scrollEnabled={!arrastrando}
             onLayout={() => { setTimeout(() => { measureZones(); }, 250); }}
+            onContentSizeChange={() => { setTimeout(() => { measureZones(); }, 250); }}
+            onScroll={measureZones}
+            scrollEventThrottle={200}
           >
             {/* ── Vidas centradas ── */}
             <LivesDisplay lives={module1Lives} />
@@ -980,7 +1001,7 @@ export default function ProcesosProduccionNivel1() {
                 <Text style={styles.actionText}>Reiniciar fase</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </ScrollView>
 
           {showModuleSplash && (
             <View style={styles.overlayTop}>
