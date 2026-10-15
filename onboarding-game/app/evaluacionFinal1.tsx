@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { scaleDP } from "./scale";
-import { API_BASE_URL } from "./config";
+import { API_BASE_URL, MIN_PASS_SCORE } from "./config";   // 70 %: misma regla que el panel admin
 
 const fondo = require("../assets/FONDOREG.png");
 
@@ -106,7 +106,6 @@ const QUESTIONS_FALLBACK: Question[] = [
   },
 ];
 
-const MIN_PASS_SCORE = 80;
 
 export default function NivelEvaluacionFinal() {
   const router = useRouter();

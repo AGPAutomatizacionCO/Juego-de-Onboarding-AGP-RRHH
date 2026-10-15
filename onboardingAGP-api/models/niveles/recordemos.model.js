@@ -2,6 +2,7 @@ const sql = require("mssql");
 const { getPool } = require("../../config/db");
 const { incrementarIntento } = require("../intentos.model");
 const { valorColumna } = require("../columnasNivel");
+const { APROBADO_MIN } = require("../../config/aprobado");
 
 /**
  * Obtiene las palabras y conceptos desde la tabla dbo.Onboarding_Recordemos
@@ -95,7 +96,7 @@ async function completarRecordemos({
     `);
 
   const porcentajeIsla = pctRes.recordset?.[0]?.PORCENTAJE ?? 0;
-  const aprobadoIsla = porcentajeIsla >= 100 ? 1 : 0;
+  const aprobadoIsla = porcentajeIsla >= APROBADO_MIN ? 1 : 0;   // criterio unico: 70 % o mas
 
   // 4) upsert en resultados isla
   await pool

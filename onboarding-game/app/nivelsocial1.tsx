@@ -13,7 +13,7 @@ import {
   View,
 } from "react-native";
 import { scaleDP } from "./scale";
-import { API_BASE_URL } from "./config";
+import { API_BASE_URL, MIN_PASS_SCORE } from "./config";   // 70 %: misma regla que el panel admin
 
 const fondo = require("../assets/FONDOREG.png");
 
@@ -76,7 +76,6 @@ const QUESTIONS_FALLBACK: Question[] = [
 ];
 
 const MAX_LIVES      = 5;
-const MIN_PASS_SCORE = 80;
 const SCORE_GAME_OVER = 75;
 
 async function safeJson(res: Response) {
@@ -462,7 +461,7 @@ export default function NivelSocial1() {
             <Text style={styles.alertText}>
               {(yaCompletado && (scoreGuardado ?? score) >= MIN_PASS_SCORE) || passed
                 ? "¡Excelente! Has aprobado el nivel de aprendizaje social 🎉"
-                : "Has completado el nivel, pero no alcanzaste el 80% mínimo. Puedes reintentar para mejorar tu resultado."}
+                : `Has completado el nivel, pero no alcanzaste el ${MIN_PASS_SCORE}% mínimo. Puedes reintentar para mejorar tu resultado.`}
             </Text>
             <View style={styles.modalRow}>
               <TouchableOpacity

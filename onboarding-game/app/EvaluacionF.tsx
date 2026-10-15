@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { scaleDP } from "./scale";
-import { API_BASE_URL } from "./config";
+import { API_BASE_URL, MIN_PASS_SCORE } from "./config";   // 70 %: misma regla que el panel admin
 
 const fondo = require("../assets/FONDOREG.png");
 const RUTA_VOLVER = "/mapa"; // Evaluación general → vuelve al mapa principal
@@ -591,7 +591,6 @@ const QUESTIONS_BASE: Question[] = [
 /* =========================================================
    CONSTANTES MATRIZ
 ========================================================= */
-const MIN_PASS_SCORE  = 80;
 const MATRIX_LABEL_W  = scaleDP(150);
 const MATRIX_COL_W    = scaleDP(72);
 const MATRIX_ROW_H    = scaleDP(40);
