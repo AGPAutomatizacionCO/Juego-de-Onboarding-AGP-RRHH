@@ -799,7 +799,8 @@ export default function AdminPanel() {
     return () => clearTimeout(t);
   }, [filtroNombre, filtroCedula, filtroOnb, cargarReporteCompleto]);
 
-  const exportarReportePdf = useCallback(async () => {
+  // soloEvaluacion = boton "Resumen": la tabla de evaluaciones finales de todo el grupo.
+  const exportarReportePdf = useCallback(async (soloEvaluacion: boolean) => {
     if (selectedOnboardingReporte == null) {
       Alert.alert("Selecciona un onboarding", "Elige primero el numero de onboarding para el que quieres el PDF.");
       return;
@@ -810,7 +811,7 @@ export default function AdminPanel() {
     }
     setExportandoPdf(true);
     try {
-      await entregarPdf(buildReportPdfHtml(reporteFiltrado));
+      await entregarPdf(soloEvaluacion ? buildResumenPdfHtml(reporteFiltrado) : buildReportPdfHtml(reporteFiltrado));
     } catch (e: any) {
       Alert.alert("PDF", e?.message || "No se pudo generar el PDF.");
     } finally {
@@ -819,7 +820,7 @@ export default function AdminPanel() {
   }, [reporteFiltrado, selectedOnboardingReporte]);
 
   // PDF de un solo participante: mismas tarjetas del reporte, con una sola fila.
-  // soloEvaluacion = boton "Resumen" (solo por candidato): la nota de la evaluacion final de cada isla.
+  // soloEvaluacion = boton "Resumen": la nota de la evaluacion final de cada isla.
   const exportarReporteUsuarioPdf = useCallback(async (soloEvaluacion: boolean) => {
     if (!reporteCompleto || !participanteReporte) {
       Alert.alert("Sin datos", "Actualiza el reporte antes de exportar.");
@@ -2026,10 +2027,17 @@ export default function AdminPanel() {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.reporteBtnPrimary, (!d || exportandoPdf) && { opacity: 0.45 }]}
-            onPress={exportarReportePdf}
+            onPress={() => exportarReportePdf(false)}
             disabled={!d || exportandoPdf}
           >
             <Text style={styles.reporteBtnPrimaryText}>{exportandoPdf ? "Generando PDF..." : "Descargar PDF"}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.reporteBtnPrimary, { marginLeft: sp(10) }, (!d || exportandoPdf) && { opacity: 0.45 }]}
+            onPress={() => exportarReportePdf(true)}
+            disabled={!d || exportandoPdf}
+          >
+            <Text style={styles.reporteBtnPrimaryText}>Resumen</Text>
           </TouchableOpacity>
         </View>
 
