@@ -611,6 +611,7 @@ export default function NivelRecordemosConcepto() {
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({
                             usuarioKey,
+                            islaKey: ISLA_KEY_STORAGE,   // sin esto el servidor recalculaba el resumen de la isla 1
                             puntaje: FIXED_SCORE,
                             aprobado: true,
                             mismatches: failedChecksRef.current,
