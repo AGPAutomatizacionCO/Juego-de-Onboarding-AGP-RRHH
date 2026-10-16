@@ -30,6 +30,11 @@ Monorepo. Antes de investigar desde cero, lee esto y los dos docs referenciados 
   sin más contexto.
 - GitHub Releases del APK: repo `AGPAutomatizacionCO/Juego-de-Onboarding-AGP-RRHH`.
   Release vigente: **v1.0.3** (no hace falta uno nuevo salvo que cambie código nativo).
+  Los APK anteriores a v1.0.3 **no reciben OTA** (`expo-updates` se agregó el
+  2026-09-02): si una tablet no se actualiza tras abrir la app dos veces, reinstalar v1.0.3.
+- Azure CLI está en este equipo en versión portable (`%LOCALAPPDATA%zure-cliinz.cmd`,
+  en el PATH del usuario). La cuenta `jcastillol@agpglass.com` **no** tiene suscripciones
+  en el tenant "AGP GROUP": el backend lo despliega el tercero que administra Azure.
 
 ## Local (desarrollo)
 
@@ -53,6 +58,10 @@ Monorepo. Antes de investigar desde cero, lee esto y los dos docs referenciados 
 - Admin de prueba: usuario/contraseña quedaron en manos del usuario (tabla
   `dbo.Onboarding_Administrador`, columnas en texto plano — así ya funcionaba,
   no se introdujo por esta sesión).
+- Cédulas `900000001`…`900000005` — usuarioKey 108, 109, 105, 106, 107, onboarding 99.
+  Perfiles de la prueba de la fila 17 (perfecto, pocos errores, justo en 70,
+  reprobado, repite niveles). Cédula `1410` (usuarioKey 112) y `1111` (113): pruebas
+  manuales del usuario. Se dejan por indicación del usuario.
 
 ## Reglas aprendidas en esta sesión
 
@@ -77,6 +86,14 @@ Monorepo. Antes de investigar desde cero, lee esto y los dos docs referenciados 
   final. Se corrió `onboardingAGP-api/scripts/fix-progreso-islas.js --apply`
   contra producción para recalcular el progreso real de los 65 usuarios ya
   afectados y borrar datos de islas a las que habían llegado fuera de orden.
+- Había una segunda llamada igual en `evaluacionFinal2.tsx` (HSE): `/avanzar` con
+  `nuevaIsla: 9` al terminar la evaluación. Quitada el 2026-10-14 (`d79ed54`); los
+  usuarios que pasaron por ahí antes siguen con todo abierto hasta re-correr el script.
+- Regla única de aprobado: **70 %** (`onboardingAGP-api/config/aprobado.js` en el
+  servidor, `MIN_PASS_SCORE` de `onboarding-game/app/config.ts` en la app). Aprobar
+  no es requisito para pasar a la isla siguiente, a propósito.
+- El seguimiento actual es por **filas del Excel de AGP (1-23)**, no por los 17
+  puntos de `specs/010`. Nombrar siempre la fila.
 
 ## Tareas recientes (más detalle en specs/009-change-log.md)
 
@@ -89,16 +106,14 @@ Monorepo. Antes de investigar desde cero, lee esto y los dos docs referenciados 
   del servidor (antes solo miraban una bandera local). Al consumirse, borra el
   resultado anterior pero preserva el conteo de intentos (INTENTO). Backend
   desplegado y verificado en vivo (`/api/admin/resultados/reintento` → 200 OK).
-- 🔄 En progreso: reporte PDF del panel admin ahora exige seleccionar un
-  onboarding específico antes de poder descargar (antes mezclaba todos los
-  grupos en un solo PDF) — cambio hecho en `adminPanel.tsx`
-  (`selectedOnboardingReporte`, `reporteFiltrado`), compila sin errores de
-  TypeScript, **pendiente de verificación visual en el navegador**.
-- ⏸️ Pausado a pedido de AGP: reporte admin filtrable por usuario individual
-  dentro de un onboarding, y auditoría de consistencia de contadores.
+- ✅ Octubre 2026, filas del Excel 1, 2, 3, 11, 15, 16, 17, 18 y 20: publicadas por
+  OTA; el backend de la fila 17 desplegado y verificado el 2026-10-15. Detalle y
+  arreglos posteriores (podio, HSE, UMAS, sopas de letras, regla de 70 %) en la
+  sección "2026-10" de `specs/009-change-log.md`.
 
 ## Pendientes conocidos
 
-Ver la tabla resumen en `specs/010-criterios-aceptacion-17-puntos.md` para el
-estado punto por punto. Nada bloqueante activo al cierre de esta nota salvo lo
-marcado 🔄 arriba.
+- Re-correr `fix-progreso-islas.js --apply` contra la BD para los usuarios que
+  terminaron HSE antes de `d79ed54` (requiere credenciales de BD).
+- Si el tercero desplegó un zip anterior a `026b9cb`, el próximo despliegue debe
+  llevar el zip actual (solo cambia el 70 % del resumen de isla, que no se muestra).

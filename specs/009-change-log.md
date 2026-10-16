@@ -455,8 +455,8 @@ A partir de octubre el seguimiento se lleva por las filas del Excel de AGP, no p
 | 11 | Manipulación: al perder todas las vidas se reinicia el nivel visual completo | `bb2169d` | Publicado (OTA) |
 | 15 | Metrología: el nivel social guardaba su avance con la clave de Calidad | `2f8b882` | Publicado (OTA) |
 | 16 | Panel admin: filtros por nombre, cédula y onboarding; reporte por persona; PDF por isla con colores AGP, "Reporte por Isla - Onboarding #N"; Resumen por candidato | `f5fbf8e`, `552cb3c`, `931320b`, `f04adde` | Publicado (OTA) |
-| 17 | Panel admin: errores, vidas e intentos reales; aprobado con ≥ 70 % (`config/aprobado.js`) | `08903af` (app), `82615d0` (API) | App publicada; **API pendiente de desplegar** (`backend-deploy.zip`) |
-| 18 | Lectura OF (nivel 31): hoja de ruta, encabezado y tabla de una OF real, 2 memorias de colores | `5d3f5d1` + cambios sin commit | OTA `5b3b6fe7` en prueba |
+| 17 | Panel admin: errores, vidas e intentos reales; aprobado con ≥ 70 % (`config/aprobado.js`) | `08903af` (app), `82615d0` (API) | Publicado; API desplegada en Azure y verificada el 2026-10-15 |
+| 18 | Lectura OF (nivel 31): hoja de ruta, encabezado y tabla de una OF real, 2 memorias de colores | `5d3f5d1`, `dbc06bd` | Publicado (OTA) |
 | 20 | Calidad: situaciones 3 y 4 del aprendizaje social según la norma | `891885c` | Publicado (OTA) |
 
 ### Fila 17 — detalle del servidor
@@ -467,8 +467,30 @@ A partir de octubre el seguimiento se lleva por las filas del Excel de AGP, no p
 - Tras desplegar: verificar `/api/health` y `/api/islas/catalogo`, y repetir las pruebas
   con las cédulas `900000001`-`900000005` (onboarding 99).
 
+- Verificación tras el despliegue (2026-10-15): con las 5 cuentas de prueba, en las islas
+  2 a 9 Lectura, Recordemos y Evaluación guardan sus errores reales, 70 % exacto marca
+  "Aprobó: Sí" y la evaluación repetida cuenta intento 2. Lo guardado antes del despliegue
+  (isla 1 de esas cuentas) no cambia: el arreglo no es retroactivo.
+
+### Arreglos posteriores (2026-10-14 a 2026-10-16)
+
+| Cambio | Commit | Causa |
+|---|---|---|
+| El podio de isla mostraba el onboarding de otro usuario | `d1034b9` | Las evaluaciones finales cachean `numeroOnboarding` en el dispositivo y el login no lo borraba |
+| Terminar HSE desbloqueaba las 9 islas | `d79ed54` | `evaluacionFinal2.tsx` llamaba a `/api/islas/:uk/avanzar` con `nuevaIsla: 9` (código original). El servidor ya desbloquea la isla siguiente al guardar la evaluación |
+| Procesos, módulo de UMAS: sin scroll, el banco y los botones quedaban fuera de pantalla | `bc5a290` | Pantalla fija; ahora tiene scroll, bloqueado mientras se arrastra una tarjeta, y re-mide las zonas al desplazarse |
+| Sopas de letras: la pista no se veía si caía en una letra ya encontrada | `e7bfc25` | El color de palabra encontrada tapaba el de la pista (5 sopas: `nivelcerebro1/3/5/7/8`) |
+| `nivelcerebro4` no enviaba `islaKey` | `c4e5c99` | El servidor asumía la isla 1 al recalcular el resumen |
+| Una sola regla de aprobado: **70 %** | `026b9cb` | Antes: 80 % en los mensajes al jugador y 100 % en el resumen de isla. El avance a la isla siguiente sigue sin exigir aprobar, a propósito (el reintento depende del admin) |
+| Panel admin: botón "Resumen" también en el reporte del grupo | `b0b6b10` | Fila 16 |
+
+**Pendiente de datos:** los usuarios que terminaron HSE antes de `d79ed54` siguen con las 9
+islas abiertas. Se corrige corriendo `onboardingAGP-api/scripts/fix-progreso-islas.js --apply`
+contra la BD (requiere credenciales).
+
 ### Hallazgos fuera de alcance (para AGP)
 
-- `nivelcerebro4` (Recordemos de Conceptos) no envía `islaKey`; el servidor asume la isla 1.
 - Los endpoints de subida de imágenes y del editor admin no tienen autenticación.
-- El "Aprobó" de la isla completa usa una regla distinta del 70 % de los niveles.
+- Dependencias con fallas conocidas (`npm audit`, 2026-10-15): servidor 18 (Express →
+  `proxy-addr`/`path-to-regexp`, `multer`), app 71 (sobre todo herramientas de compilación;
+  las críticas vienen de Firebase, que está instalado pero no se usa).
