@@ -32,7 +32,7 @@ Monorepo. Antes de investigar desde cero, lee esto y los dos docs referenciados 
   Release vigente: **v1.0.3** (no hace falta uno nuevo salvo que cambie código nativo).
   Los APK anteriores a v1.0.3 **no reciben OTA** (`expo-updates` se agregó el
   2026-09-02): si una tablet no se actualiza tras abrir la app dos veces, reinstalar v1.0.3.
-- Azure CLI está en este equipo en versión portable (`%LOCALAPPDATA%zure-cliinz.cmd`,
+- Azure CLI está en este equipo en versión portable (`%LOCALAPPDATA%/azure-cli/bin/az.cmd`,
   en el PATH del usuario). La cuenta `jcastillol@agpglass.com` **no** tiene suscripciones
   en el tenant "AGP GROUP": el backend lo despliega el tercero que administra Azure.
 
