@@ -32,4 +32,28 @@ async function valorColumna(pool, columna, valor) {
   return (await admiteNull(pool, columna)) ? null : 0;
 }
 
-module.exports = { valorColumna };
+// ¿Existe la columna en Onboarding_Resultados_Nivel? Solo se recuerda el "sí":
+// mientras no exista se vuelve a preguntar, así el backend sigue funcionando
+// antes del ALTER TABLE y empieza a usarla sola apenas la creen.
+const existe = {};
+
+async function existeColumna(pool, columna) {
+  if (existe[columna]) return true;
+  try {
+    const r = await pool
+      .request()
+      .input("col", sql.NVarChar(128), columna)
+      .query(`
+        SELECT 1 AS ok
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = 'Onboarding_Resultados_Nivel' AND COLUMN_NAME = @col
+      `);
+    existe[columna] = r.recordset.length > 0;
+  } catch (e) {
+    console.error("existeColumna:", e.message);
+    return false;
+  }
+  return existe[columna];
+}
+
+module.exports = { valorColumna, existeColumna };

@@ -1,5 +1,6 @@
 const sql = require("mssql");
 const { getPool } = require("../../config/db");
+const { existeColumna } = require("../columnasNivel");
 
 /**
  * Obtiene las preguntas de evaluación desde la tabla dbo.Onboarding_Evaluacion
@@ -56,6 +57,9 @@ async function getPodioAllUsers({ nivelKey, numeroOnboarding }) {
 }
 async function getPodioIsla({ islaKey, numeroOnboarding }) {
   const pool = await getPool();
+  // La isla 9 tiene un solo nivel: la resta primera-última FECHA siempre da 0,
+  // así que para islas de un nivel se usa la duración que guardó la app.
+  const conTiempo = await existeColumna(pool, "TIEMPO_SEGUNDOS");
   const res = await pool
     .request()
     .input("islaKey", sql.Int, islaKey)
@@ -68,6 +72,7 @@ async function getPodioIsla({ islaKey, numeroOnboarding }) {
       ;WITH UltimoResultado AS (
         SELECT
           USUARIO_KEY, NIVELES_KEY, PUNTAJE, FECHA,
+          ${conTiempo ? "TIEMPO_SEGUNDOS" : "CAST(NULL AS INT)"} AS TIEMPO_SEGUNDOS,
           ROW_NUMBER() OVER (PARTITION BY USUARIO_KEY, NIVELES_KEY ORDER BY FECHA DESC) AS rn
         FROM dbo.Onboarding_Resultados_Nivel
         WHERE NIVELES_KEY IN (SELECT NIVELES_KEY FROM dbo.Onboarding_Niveles WHERE ISLAS_KEY = @islaKey)
@@ -77,8 +82,10 @@ async function getPodioIsla({ islaKey, numeroOnboarding }) {
           USUARIO_KEY,
           COUNT(*) AS nivelesCompletados,
           AVG(CAST(PUNTAJE AS FLOAT)) AS promedio,
-          MIN(FECHA) AS inicio,
-          MAX(FECHA) AS fin
+          CASE
+            WHEN @totalNiveles = 1 THEN MAX(TIEMPO_SEGUNDOS)
+            ELSE DATEDIFF(SECOND, MIN(FECHA), MAX(FECHA))
+          END AS tiempo
         FROM UltimoResultado
         WHERE rn = 1
         GROUP BY USUARIO_KEY
@@ -93,7 +100,7 @@ async function getPodioIsla({ islaKey, numeroOnboarding }) {
         END AS puntaje,
         CASE
           WHEN @totalNiveles > 0 AND a.nivelesCompletados = @totalNiveles
-          THEN DATEDIFF(SECOND, a.inicio, a.fin)
+          THEN a.tiempo
           ELSE NULL
         END AS tiempoSegundos
       FROM dbo.Onboarding_Usuarios_NEW u
@@ -102,7 +109,7 @@ async function getPodioIsla({ islaKey, numeroOnboarding }) {
       ORDER BY
         CASE WHEN @totalNiveles > 0 AND a.nivelesCompletados = @totalNiveles THEN 0 ELSE 1 END ASC,
         CASE WHEN @totalNiveles > 0 AND a.nivelesCompletados = @totalNiveles THEN a.promedio END DESC,
-        CASE WHEN @totalNiveles > 0 AND a.nivelesCompletados = @totalNiveles THEN DATEDIFF(SECOND, a.inicio, a.fin) END ASC
+        CASE WHEN @totalNiveles > 0 AND a.nivelesCompletados = @totalNiveles THEN a.tiempo END ASC
     `);
   return res.recordset || [];
 }

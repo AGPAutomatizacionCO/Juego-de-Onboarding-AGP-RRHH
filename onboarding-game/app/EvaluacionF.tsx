@@ -625,6 +625,7 @@ export default function EvaluacionFinalGeneral() {
   const [missingCount,     setMissingCount]     = useState(0);
   const [reintentoPendiente, setReintentoPendiente] = useState(false);
 
+  const inicioRef    = useRef<number | null>(null);   // hora en que empezó a responder (tiempo del podio)
   const transOpacity = useRef(new Animated.Value(1)).current;
   const transX       = useRef(new Animated.Value(0)).current;
   const transScale   = useRef(new Animated.Value(1)).current;
@@ -692,6 +693,7 @@ export default function EvaluacionFinalGeneral() {
     setQuestions(shuffled);
     setAnswersSingle({}); setAnswersMulti({}); setAnswersMatrix({}); setAnswersMatrixMulti({});
     setQIndex(0); setShowIntro(false); setShowGame(true);
+    inicioRef.current = Date.now();
   };
 
   /* ── Selección ── */
@@ -753,7 +755,8 @@ export default function EvaluacionFinalGeneral() {
   /* ── Guardar en BD ── */
   const saveScoreToDB = async (pct: number, mismatches: number) => {
     if (!usuarioKey) throw new Error("No se encontró USUARIO_KEY en la sesión.");
-    await apiJson(`${API_BASE}/evaluacionFinal/resultado`, { method: "POST", body: JSON.stringify({ usuarioKey, nivelKey: NIVEL_KEY, islaKey: ISLA_KEY, puntaje: pct, mismatches }) });
+    const tiempoSegundos = inicioRef.current ? Math.round((Date.now() - inicioRef.current) / 1000) : null;
+    await apiJson(`${API_BASE}/evaluacionFinal/resultado`, { method: "POST", body: JSON.stringify({ usuarioKey, nivelKey: NIVEL_KEY, islaKey: ISLA_KEY, puntaje: pct, mismatches, tiempoSegundos }) });
     await AsyncStorage.multiSet([
       [`u:${usuarioKey}:isla${ISLA_KEY}_nivel${NIVEL_KEY}_evaluacion_done`,  "true"],
       [`u:${usuarioKey}:isla${ISLA_KEY}_nivel${NIVEL_KEY}_evaluacion_score`, String(pct)],

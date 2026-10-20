@@ -2,7 +2,7 @@ const { sql, getPool } = require("../../config/db");
 const { obtenerPreguntasEvaluacion } = require("../../models/niveles/evaluacionFinal.model");
 const { incrementarIntento } = require("../../models/intentos.model");
 const { APROBADO_MIN } = require("../../config/aprobado");
-const { valorColumna } = require("../../models/columnasNivel");
+const { valorColumna, existeColumna } = require("../../models/columnasNivel");
 
 const TABLA_RESULTADOS = "dbo.Onboarding_Resultados_Nivel";
 const TABLA_USUARIOS = "dbo.Onboarding_Usuarios_NEW";
@@ -55,7 +55,7 @@ async function getPreguntasEvaluacion(req, res) {
 
 exports.upsertResultado = async function upsertResultado(req, res) {
   try {
-    const { usuarioKey, nivelKey, puntaje, mismatches, livesLeft } = req.body;
+    const { usuarioKey, nivelKey, puntaje, mismatches, livesLeft, tiempoSegundos } = req.body;
 
     const uk = Number(usuarioKey);
     const nk = Number(nivelKey);
@@ -76,6 +76,11 @@ exports.upsertResultado = async function upsertResultado(req, res) {
     // Errores y vidas son opcionales: si la pantalla no los envia se guarda NULL, no 0.
     const mm = await valorColumna(pool, "MISMATCHES", mismatches);
     const ll = await valorColumna(pool, "LIVES_LEFT", livesLeft);
+    // Duración medida por la app (solo la evaluación final la envía). Si la
+    // columna aún no existe en la BD, simplemente no se guarda.
+    const ts = Number(tiempoSegundos);
+    const conTiempo = await existeColumna(pool, "TIEMPO_SEGUNDOS");
+    const tiempo = Number.isFinite(ts) && ts >= 0 ? Math.round(ts) : null;
     const aprobado = pct >= APROBADO_MIN ? 1 : 0;   // criterio unico: 70 % o mas
     // El conteo de intentos vive aparte (sobrevive al borrado de consumirReintento).
     const intento = await incrementarIntento(uk, nk);
@@ -101,6 +106,7 @@ exports.upsertResultado = async function upsertResultado(req, res) {
         .input("intento", sql.Int, intento)
         .input("mismatches", sql.Int, mm)
         .input("livesLeft", sql.Int, ll)
+        .input("tiempo", sql.Int, tiempo)
         .query(`
           UPDATE ${TABLA_RESULTADOS}
           SET PUNTAJE = @puntaje,
@@ -108,7 +114,7 @@ exports.upsertResultado = async function upsertResultado(req, res) {
               APROBADO = @aprobado,
               INTENTO = @intento,
               MISMATCHES = @mismatches,
-              LIVES_LEFT = @livesLeft
+              LIVES_LEFT = @livesLeft${conTiempo ? ", TIEMPO_SEGUNDOS = @tiempo" : ""}
           WHERE USUARIO_KEY = @usuarioKey
             AND NIVELES_KEY = @nivelKey
         `);
@@ -122,11 +128,12 @@ exports.upsertResultado = async function upsertResultado(req, res) {
         .input("intento", sql.Int, intento)
         .input("mismatches", sql.Int, mm)
         .input("livesLeft", sql.Int, ll)
+        .input("tiempo", sql.Int, tiempo)
         .query(`
           INSERT INTO ${TABLA_RESULTADOS}
-            (USUARIO_KEY, NIVELES_KEY, PUNTAJE, APROBADO, INTENTO, MISMATCHES, LIVES_LEFT, FECHA)
+            (USUARIO_KEY, NIVELES_KEY, PUNTAJE, APROBADO, INTENTO, MISMATCHES, LIVES_LEFT, FECHA${conTiempo ? ", TIEMPO_SEGUNDOS" : ""})
           VALUES
-            (@usuarioKey, @nivelKey, @puntaje, @aprobado, @intento, @mismatches, @livesLeft, GETDATE())
+            (@usuarioKey, @nivelKey, @puntaje, @aprobado, @intento, @mismatches, @livesLeft, GETDATE()${conTiempo ? ", @tiempo" : ""})
         `);
     }
 

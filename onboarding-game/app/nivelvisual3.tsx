@@ -128,7 +128,7 @@ const MODULE2_SCREENS: ToolScreen[] = [
     items: [
       { id: "herr5",  label: "VÁLVULAS",       cardImage: require("../assets/visual3/valvulas1.png"),  toolImage: require("../assets/visual3/valvulas2.png") },
       { id: "herr6",  label: "PISTOLA DE CALOR", cardImage: require("../assets/visual3/pistola1.png"), toolImage: require("../assets/visual3/pistola2.png") },
-      { id: "herr7",  label: "CAUTINES",        cardImage: require("../assets/visual3/cautin1.png"),   toolImage: require("../assets/visual3/cautin2.png") },
+      { id: "herr7",  label: "CAUTIN",          cardImage: require("../assets/visual3/cautin1.png"),   toolImage: require("../assets/visual3/cautin2.png") },
       { id: "herr8",  label: "VENTOSA",         cardImage: require("../assets/visual3/ventosa1.png"),  toolImage: require("../assets/visual3/ventosa2.png") },
     ],
   },

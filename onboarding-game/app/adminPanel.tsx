@@ -1911,14 +1911,14 @@ export default function AdminPanel() {
               onPress={() => exportarReporteUsuarioPdf(false)}
               disabled={exportandoPdf}
             >
-              <Text style={styles.reporteBtnPrimaryText}>{exportandoPdf ? "Generando PDF..." : "Descargar PDF"}</Text>
+              <Text style={styles.reporteBtnPrimaryText}>{exportandoPdf ? "Generando PDF..." : "Descargar reporte general"}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.reporteBtnPrimary, { marginLeft: sp(10) }, exportandoPdf && { opacity: 0.45 }]}
               onPress={() => exportarReporteUsuarioPdf(true)}
               disabled={exportandoPdf}
             >
-              <Text style={styles.reporteBtnPrimaryText}>Resumen</Text>
+              <Text style={styles.reporteBtnPrimaryText}>Descargar reporte evaluacion final</Text>
             </TouchableOpacity>
           </View>
 
@@ -2030,14 +2030,14 @@ export default function AdminPanel() {
             onPress={() => exportarReportePdf(false)}
             disabled={!d || exportandoPdf}
           >
-            <Text style={styles.reporteBtnPrimaryText}>{exportandoPdf ? "Generando PDF..." : "Descargar PDF"}</Text>
+            <Text style={styles.reporteBtnPrimaryText}>{exportandoPdf ? "Generando PDF..." : "Descargar reporte general"}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.reporteBtnPrimary, { marginLeft: sp(10) }, (!d || exportandoPdf) && { opacity: 0.45 }]}
             onPress={() => exportarReportePdf(true)}
             disabled={!d || exportandoPdf}
           >
-            <Text style={styles.reporteBtnPrimaryText}>Resumen</Text>
+            <Text style={styles.reporteBtnPrimaryText}>Descargar reporte evaluacion final</Text>
           </TouchableOpacity>
         </View>
 
