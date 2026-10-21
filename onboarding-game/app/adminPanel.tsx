@@ -2096,6 +2096,9 @@ export default function AdminPanel() {
           </View>
         ) : (
           <>
+            <TouchableOpacity style={styles.backLink} onPress={() => router.back()}>
+              <Text style={styles.backLinkText}>← Volver</Text>
+            </TouchableOpacity>
             {renderMenu()}
             {menu === "panel" && renderPanel()}
             {menu === "edicion" && renderEdicion()}
@@ -2143,6 +2146,10 @@ const styles = StyleSheet.create({
   loginButtonText: { color: "white", fontFamily: "PlusJakartaSans-Bold", fontSize: isPhone ? sp(16) : sp(18), textAlign: "center" },
   volver: { marginTop: sp(12), alignSelf: "center", paddingVertical: sp(8), paddingHorizontal: sp(20), borderRadius: sp(8), borderWidth: 1, borderColor: "#0F1B4C" },
   volverText: { fontFamily: "PlusJakartaSans-Regular", fontSize: isPhone ? sp(13) : sp(15), color: "#0F1B4C" },
+
+  /* "← Volver" arriba a la izquierda, como en "¿Cómo quieres ingresar?" (registration.tsx) */
+  backLink: { alignSelf: "flex-start", marginBottom: sp(8) },
+  backLinkText: { fontFamily: "PlusJakartaSans-Bold", fontSize: isPhone ? sp(16) : sp(18), color: "#0F1B4C" },
 
   /* MENU */
   menuBox: { flexDirection: "row", justifyContent: "center", marginBottom: sp(14) },
