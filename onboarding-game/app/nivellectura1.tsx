@@ -257,7 +257,6 @@ export default function NivelLectura() {
   const speak = (text: string) => {
     try {
       Speech.stop();
-      Speech.speak(text, { language: "es-ES", rate: 1.0, pitch: 1.0, volume: 1.0 });
     } catch {}
   };
 

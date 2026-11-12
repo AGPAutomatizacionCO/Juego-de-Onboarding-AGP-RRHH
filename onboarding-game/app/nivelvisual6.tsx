@@ -1,6 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import * as Speech from "expo-speech";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -265,7 +264,6 @@ export default function NivelVisualMetrologia() {
   useEffect(() => {
     if (showTryAgain) {
       playRetryAnim();
-      Speech.speak("Perdiste una vida, sigue intentando.", { language: "es-ES", rate: 1 });
       const t = setTimeout(() => setShowTryAgain(false), 2000);
       return () => clearTimeout(t);
     }
@@ -321,7 +319,6 @@ export default function NivelVisualMetrologia() {
             const SCORE_GAME_OVER = 75;
             setGameOverScore(SCORE_GAME_OVER);
             setShowGameOver(true);
-            Speech.speak("Se acabaron las vidas.", { language: "es-ES", rate: 1 });
             (async () => {
               if (!usuarioKey) return;
               const aprobado = SCORE_GAME_OVER >= 70;
@@ -363,7 +360,6 @@ export default function NivelVisualMetrologia() {
         setSuccessVisible(true);
         fadeAnim.setValue(0);
         Animated.timing(fadeAnim, { toValue: 1, duration: 250, useNativeDriver: true }).start();
-        Speech.speak("Excelente, has encontrado todas las parejas.", { language: "es-ES", rate: 1 });
       }, 400);
     }
   }, [matchedIds, baseCount, usuarioKey]);
@@ -385,10 +381,6 @@ export default function NivelVisualMetrologia() {
     setProgressVisible(true);
     progressFade.setValue(0);
     Animated.timing(progressFade, { toValue: 1, duration: 250, useNativeDriver: true }).start();
-    const msg = remainingPairs > 0
-      ? `Te faltan ${remainingPairs} pareja${remainingPairs === 1 ? "" : "s"} por encontrar.`
-      : "Ya has encontrado todas las parejas.";
-    Speech.speak(msg, { language: "es-ES", rate: 1 });
   };
 
   /* =========================================================
