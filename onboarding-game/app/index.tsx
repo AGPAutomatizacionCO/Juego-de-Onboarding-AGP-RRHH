@@ -15,7 +15,6 @@ export default function StartScreen() {
   const logo = useRef(new Animated.Value(0)).current;
   const titulo = useRef(new Animated.Value(0)).current;
   const lema = useRef(new Animated.Value(0)).current;
-  const logoChico = useRef(new Animated.Value(0)).current;
 
   const goNext = () => {
     if (navigatedRef.current) return;
@@ -34,7 +33,7 @@ export default function StartScreen() {
     Animated.sequence([
       fade(logo, 1, 900),
       Animated.delay(1800),
-      Animated.parallel([fade(logo, 0), fade(logoChico, 1)]),
+      fade(logo, 0),
       fade(titulo, 1),
       Animated.delay(2000),
       fade(titulo, 0),
@@ -58,11 +57,6 @@ export default function StartScreen() {
         source={require("../assets/introfondo.jpg")}
         style={StyleSheet.absoluteFill}
         resizeMode="cover"
-      />
-      <Animated.Image
-        source={require("../assets/LOGO.png")}
-        style={[styles.logoChico, { opacity: logoChico }]}
-        resizeMode="contain"
       />
       <View style={styles.centro}>
         <Animated.Image
@@ -96,13 +90,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   logo: { width: "55%", height: "35%" },
-  logoChico: { position: "absolute", top: 24, right: 32, width: 120, height: 45, zIndex: 1 },
   titulo: {
     fontFamily: "PlusJakartaSans-ExtraBold",
     fontSize: 84,
     lineHeight: 92,
-    color: "#4C4C4C",
+    color: "#FFFFFF",
     textAlign: "center",
+    textShadowColor: "rgba(0,0,0,0.35)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   lema: {
     fontFamily: "PlusJakartaSans-Bold",

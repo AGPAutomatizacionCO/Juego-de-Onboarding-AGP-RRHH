@@ -261,8 +261,11 @@ export default function MapaScreen() {
                 <Image
                   source={isla.img}
                   style={{
-                    width: isla.width,
-                    height: isla.height,
+                    // 20 % más pequeñas que su caja, centradas en el mismo punto
+                    width: isla.width * 0.8,
+                    height: isla.height * 0.8,
+                    marginHorizontal: isla.width * 0.1,
+                    marginTop: isla.height * 0.1,
                     resizeMode: "contain",
                   }}
                 />
