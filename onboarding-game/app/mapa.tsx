@@ -30,19 +30,19 @@ export default function MapaScreen() {
     {
       id: 1,
       img: require("../assets/islas/introduccion.png"),
-      top: 0.4,
-      left: 0.01,
-      width: 460,
-      height: 360,
+      top: 0.3875,
+      left: 0.0064,
+      width: 480,
+      height: 380,
       screen: "/Introduccion",
     },
     {
       id: 2,
       img: require("../assets/islas/hse.png"),
-      top: 0.08,
-      left: 0.13,
-      width: 450,
-      height: 350,
+      top: 0.0612,
+      left: 0.1247,
+      width: 480,
+      height: 380,
       screen: "/HSE",
     },
     {
@@ -57,19 +57,20 @@ export default function MapaScreen() {
     {
       id: 3,
       img: require("../assets/islas/procesos.png"),
-      top: 0.42,
-      left: 0.24,
-      width: 460,
-      height: 360,
+      top: 0.4075,
+      left: 0.2364,
+      width: 480,
+      height: 380,
       screen: "/Procesos",
     },
     {
       id: 7,
-      img: require("../assets/islas/lectura.png"),
-      top: 0.36,
-      left: 0.64,
-      width: 500,
-      height: 400,
+      // nombre propio: "lectura.png" no cargaba en la tablet (comparte nombre con la carpeta islas/lectura/)
+      img: require("../assets/islas/mapa_lectura_of.png"),
+      top: 0.3725,
+      left: 0.6436,
+      width: 480,
+      height: 380,
       screen: "/LecturaOF",
     },
     {
@@ -103,10 +104,10 @@ export default function MapaScreen() {
     {
       id: 9,
       img: require("../assets/islas/evaluacion.png"),
-      top: 0.41,
-      left: 0.83,
-      width: 450,
-      height: 350,
+      top: 0.3912,
+      left: 0.8247,
+      width: 480,
+      height: 380,
       screen: "/EvaluacionF",
     },
   ];
@@ -225,11 +226,14 @@ export default function MapaScreen() {
         {islas.map((isla) => {
           const activa = islaActiva(isla.id);
 
-          const inputRange = [
-            isla.left * scrollWidth - width,
-            isla.left * scrollWidth,
-            isla.left * scrollWidth + width,
-          ];
+          // Recorrido igual para todas: la isla llega a su punto máximo cuando
+          // su centro pasa por el centro de la pantalla (acotado a los extremos
+          // del scroll para que la primera y la última también lo alcancen).
+          const centro = Math.min(
+            Math.max(isla.left * scrollWidth + isla.width / 2 - width / 2, 0),
+            scrollWidth - width
+          );
+          const inputRange = [centro - width / 2, centro, centro + width / 2];
 
           const translateY = scrollX.interpolate({
             inputRange,
@@ -237,6 +241,12 @@ export default function MapaScreen() {
             extrapolate: "clamp",
           });
 
+          // Zoom suave: 0.88 en reposo, máximo +10 % (0.968) al centro.
+          const scale = scrollX.interpolate({
+            inputRange,
+            outputRange: [0.88, 0.968, 0.88],
+            extrapolate: "clamp",
+          });
 
           return (
             <Animated.View
@@ -245,8 +255,7 @@ export default function MapaScreen() {
                 position: "absolute",
                 top: isla.top * height,
                 left: isla.left * scrollWidth,
-                // Tamaño fijo: el zoom al desplazar (0.8 -> 1) las agrandaba 25 %.
-                transform: [{ translateY }, { scale: 0.8 }],
+                transform: [{ translateY }, { scale }],
                 opacity: activa ? 1 : 0.35,
               }}
             >
@@ -265,6 +274,8 @@ export default function MapaScreen() {
                     marginTop: isla.height * 0.06,
                     resizeMode: "contain",
                   }}
+                  // Android decodifica al tamaño en pantalla, no a 1200 px: menos memoria.
+                  resizeMethod="resize"
                 />
               </TouchableOpacity>
 
