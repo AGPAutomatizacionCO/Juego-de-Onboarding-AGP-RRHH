@@ -115,7 +115,7 @@ export default function ProcesosDeProduccion() {
   const subislas = [
     { id: 1, img: require("../assets/islas/introduccion/visual1.png"),     top: 0.3,  left: 0.04, width: 450, height: 350, screen: "nivelvisual3" },
     { id: 2, img: require("../assets/islas/introduccion/lectura1.png"),    top: 0.3,  left: 0.23, width: 450, height: 350, screen: "/nivellectura3" },
-    { id: 3, img: require("../assets/islas/introduccion/cerebro1.png"),    top: 0.32, left: 0.42, width: 400, height: 300, screen: "/nivelcerebro3" },
+    { id: 3, img: require("../assets/islas/introduccion/cerebro1.png"),    top: 0.3,  left: 0.42, width: 450, height: 350, screen: "/nivelcerebro3" },
     { id: 4, img: require("../assets/islas/introduccion/social1.png"),     top: 0.3,  left: 0.6,  width: 450, height: 350, screen: "/nivelsocial3" },
     { id: 5, img: require("../assets/islas/introduccion/evaluacion1.png"), top: 0.3,  left: 0.8,  width: 450, height: 350, screen: "/evaluacionFinal3" },
   ];

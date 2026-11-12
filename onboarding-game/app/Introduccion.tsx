@@ -222,10 +222,10 @@ export default function IntroduccionAGP() {
     {
       id: 3,
       img: require("../assets/islas/introduccion/cerebro1.png"),
-      top: 0.32,
+      top: 0.3,
       left: 0.42,
-      width: 400,
-      height: 300,
+      width: 450,
+      height: 350,
       screen: "/nivelcerebro1",
     },
     {
