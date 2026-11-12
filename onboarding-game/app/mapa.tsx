@@ -75,10 +75,11 @@ export default function MapaScreen() {
     {
       id: 6,
       img: require("../assets/islas/metrologia.png"),
-      top: 0.001,
-      left: 0.54,
-      width: 550,
-      height: 450,
+      // misma caja que las demás (antes 550x450), centrada en el mismo punto
+      top: 0.045,
+      left: 0.552,
+      width: 480,
+      height: 380,
       screen: "/Metrologia",
     },
     {
@@ -236,11 +237,6 @@ export default function MapaScreen() {
             extrapolate: "clamp",
           });
 
-          const scale = scrollX.interpolate({
-            inputRange,
-            outputRange: [0.8, 1, 0.8],
-            extrapolate: "clamp",
-          });
 
           return (
             <Animated.View
@@ -249,7 +245,8 @@ export default function MapaScreen() {
                 position: "absolute",
                 top: isla.top * height,
                 left: isla.left * scrollWidth,
-                transform: [{ translateY }, { scale }],
+                // Tamaño fijo: el zoom al desplazar (0.8 -> 1) las agrandaba 25 %.
+                transform: [{ translateY }, { scale: 0.8 }],
                 opacity: activa ? 1 : 0.35,
               }}
             >

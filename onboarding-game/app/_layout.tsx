@@ -22,7 +22,6 @@ export default function RootLayout() {
     "PlusJakartaSans-ExtraBold": require("../assets/fonts/PlusJakartaSans-ExtraBold.ttf"),
   });
 
-  const [orientationLocked, setOrientationLocked] = useState(false);
 
   useEffect(() => {
     async function lockOrientation() {
@@ -36,7 +35,6 @@ export default function RootLayout() {
           console.log("No se pudo bloquear la orientación:", error);
         }
       }
-      setOrientationLocked(true);
     }
     lockOrientation();
 
@@ -76,10 +74,13 @@ export default function RootLayout() {
     checkForUpdate();
   }, []);
 
-  if (!fontsLoaded || !orientationLocked) {
+  // No se espera el bloqueo de orientación: en la tablet tardaba y dejaba
+  // esta pantalla (antes azul oscuro con indicador invisible) varios segundos
+  // antes de la intro. index.tsx ya fija la orientación horizontal.
+  if (!fontsLoaded) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#0F1B4C" />
+        <ActivityIndicator size="large" color="#035E6B" />
       </View>
     );
   }
@@ -104,6 +105,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#0F1B4C",
+    backgroundColor: "#CFE8F0", // mismo celeste de la intro
   },
 });
