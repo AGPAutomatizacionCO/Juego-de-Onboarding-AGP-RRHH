@@ -1026,6 +1026,50 @@ export default function AdminPanel() {
     [API_URL, selectedUserObj]
   );
 
+  /* ========================= ISLA AL 100 % ========================= */
+
+  const [isla100Loading, setIsla100Loading] = useState(false);
+
+  // Guarda todos los niveles de la isla al 100 % para el usuario buscado. Usa la
+  // misma ruta que la evaluación final: al guardar el último nivel de la isla el
+  // servidor desbloquea la siguiente (upsertResultado, nk >= 5). No necesita backend nuevo.
+  const marcarIsla100 = useCallback(async () => {
+    const isla = selectedIslaPanel ? islas.find((i) => i.id === selectedIslaPanel.id) ?? selectedIslaPanel : null;
+    if (!selectedUserObj || !isla) return;
+    const u = selectedUserObj;
+    const ejecutar = async () => {
+      setIsla100Loading(true);
+      try {
+        const keys = isla.niveles.map((n) => Number(n.id)).sort((a, b) => a - b);
+        for (const nivelKey of keys) {
+          await apiJson(`${API_URL}/api/niveles/evaluacionFinal/resultado`, {
+            method: "POST",
+            body: JSON.stringify({ usuarioKey: u.usuarioKey, nivelKey, puntaje: 100 }),
+            timeoutMs: 30000,
+          });
+        }
+        setExpandedNiveles(new Set());
+        setDetalleCache(new Map());
+        await cargarPorcentajesUsuario(u.usuarioKey, isla.id);
+        showToast(`${isla.nombre} quedó al 100 % para ${u.nombre}.`);
+      } catch (e: any) {
+        Alert.alert("Error", e?.message || "No se pudo marcar la isla al 100 %.");
+      } finally {
+        setIsla100Loading(false);
+      }
+    };
+    const msg = `Se guardarán los ${isla.niveles.length} niveles de ${isla.nombre} al 100 % para ${u.nombre} (CC ${u.cedula}) y se abrirá la isla siguiente. Reemplaza los resultados que tenga.`;
+    // Alert con botones no se muestra en react-native-web.
+    if (Platform.OS === "web") {
+      if (window.confirm(msg)) ejecutar();
+    } else {
+      Alert.alert("Marcar isla al 100 %", msg, [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Marcar", onPress: ejecutar },
+      ]);
+    }
+  }, [API_URL, selectedUserObj, selectedIslaPanel, islas, cargarPorcentajesUsuario, showToast]);
+
   /* ========================= EDITOR ========================= */
 
   const normalizeLecturaItems = (raw: any): LecturaItem[] => {
@@ -1395,6 +1439,17 @@ export default function AdminPanel() {
                             </TouchableOpacity>
                           )
                         )}
+
+                        {/* Isla completa al 100 % (se muestra aunque no haya jugado) */}
+                        <TouchableOpacity
+                          style={[styles.reintentoBtn, styles.isla100Btn]}
+                          disabled={isla100Loading}
+                          onPress={marcarIsla100}
+                        >
+                          <Text style={styles.reintentoBtnText}>
+                            {isla100Loading ? "Guardando..." : "Marcar isla al 100 %"}
+                          </Text>
+                        </TouchableOpacity>
 
                         {/* Respuestas */}
                         {cached.preguntas.length > 0 ? (
@@ -2323,6 +2378,7 @@ const styles = StyleSheet.create({
     marginBottom: sp(4),
   },
   reintentoBtnOn: { backgroundColor: "#16A34A" },
+  isla100Btn: { backgroundColor: "#035E6B" },
   reintentoBtnText: { fontFamily: "PlusJakartaSans-Bold", fontSize: sp(12), color: "#FFFFFF" },
   expandedSectionTitle: { fontFamily: "PlusJakartaSans-Bold", fontSize: sp(14), color: "#0F1B4C", marginTop: sp(10), marginBottom: sp(6) },
   expandedPreguntaRow: {
