@@ -31,7 +31,7 @@ export default function MapaScreen() {
       id: 1,
       img: require("../assets/islas/introduccion.png"),
       top: 0.3875,
-      left: 0.0064,
+      left: 0.0059,
       width: 480,
       height: 380,
       screen: "/Introduccion",
@@ -40,7 +40,7 @@ export default function MapaScreen() {
       id: 2,
       img: require("../assets/islas/hse.png"),
       top: 0.0612,
-      left: 0.1247,
+      left: 0.1143,
       width: 480,
       height: 380,
       screen: "/HSE",
@@ -49,7 +49,7 @@ export default function MapaScreen() {
       id: 4,
       img: require("../assets/islas/conceptos.png"),
       top: 0.04,
-      left: 0.34,
+      left: 0.3117,
       width: 480,
       height: 380,
       screen: "/Conceptos",
@@ -58,7 +58,7 @@ export default function MapaScreen() {
       id: 3,
       img: require("../assets/islas/procesos.png"),
       top: 0.4075,
-      left: 0.2364,
+      left: 0.2167,
       width: 480,
       height: 380,
       screen: "/Procesos",
@@ -68,7 +68,7 @@ export default function MapaScreen() {
       // nombre propio: "lectura.png" no cargaba en la tablet (comparte nombre con la carpeta islas/lectura/)
       img: require("../assets/islas/mapa_lectura_of.png"),
       top: 0.3725,
-      left: 0.6436,
+      left: 0.612,
       width: 480,
       height: 380,
       screen: "/LecturaOF",
@@ -78,7 +78,7 @@ export default function MapaScreen() {
       img: require("../assets/islas/metrologia.png"),
       // misma caja que las demás (antes 550x450), centrada en el mismo punto
       top: 0.045,
-      left: 0.552,
+      left: 0.506,
       width: 480,
       height: 380,
       screen: "/Metrologia",
@@ -87,7 +87,7 @@ export default function MapaScreen() {
       id: 8,
       img: require("../assets/islas/calidad.png"),
       top: 0.06,
-      left: 0.74,
+      left: 0.7292,
       width: 480,
       height: 380,
       screen: "/Calidad",
@@ -96,7 +96,7 @@ export default function MapaScreen() {
       id: 5,
       img: require("../assets/islas/manipulacion.png"),
       top: 0.38,
-      left: 0.44,
+      left: 0.4033,
       width: 480,
       height: 380,
       screen: "/Manipulacion",
@@ -105,7 +105,7 @@ export default function MapaScreen() {
       id: 9,
       img: require("../assets/islas/evaluacion.png"),
       top: 0.3912,
-      left: 0.8247,
+      left: 0.8398,
       width: 480,
       height: 380,
       screen: "/EvaluacionF",
@@ -179,7 +179,7 @@ export default function MapaScreen() {
   };
 
   const scrollX = useRef(new Animated.Value(0)).current;
-  const scrollWidth = width * 2.2;
+  const scrollWidth = width * 2.4; // 2.2 -> 2.4 para separar las 3 últimas islas
 
   return (
     <View style={{ flex: 1, overflow: "hidden" }}>
